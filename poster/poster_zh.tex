@@ -1,0 +1,93 @@
+% !TeX program = xelatex
+\documentclass[UTF8,fontset=fandol,10pt]{ctexart}
+\input{poster_style.tex}
+\begin{document}
+\fontsize{8.5}{10.5}\selectfont
+\posterheader{变推力变质量火箭：从入轨规划到预测控制}{齐奥尔科夫斯基方程 · 粒子群优化 · 模型预测控制}{实用数理方法课程研究｜2026}
+\columnstart
+\sect{01}{研究问题与物理模型}
+\textbf{入轨需要高度与速度同时达标。}近地轨道支撑对地观测、空间实验与后续航天任务。只有上升高度而缺乏横向速度，火箭仍将沿亚轨道返回。
+\subhead{由竖直上升到理想推进能力}
+喷出质量 $-\mathrm dm>0$，相对排气速度为 $c$。由微元动量守恒：
+\[
+ m\,\mathrm dv=-c\,\mathrm dm+F_{\rm ext}\,\mathrm dt.
+\]
+忽略外力、保持排气速度恒定，积分得
+\[
+ \boxed{\Delta v_{\rm ideal}=c\ln(m_0/m_f)}.
+\]
+总冲量 $I_T=\int T\,\mathrm dt=c(m_0-m_f)$；速度增量则需积分 $T/m$。理想方程结合圆轨道能量，可给出由静止出发、$r\ge r_0$、无随机外力且阻力耗能时的必要质量比下界：
+\[
+ \frac{m_0}{m_f}\ge\exp\!\left[\frac{\sqrt{2\mu/r_0-\mu/r_*}}{c}\right].
+\]
+600 km 算例中该下界为 \textbf{6.245}；满足它并不保证可入轨。
+\subhead{地心二维极坐标动力学}
+令 $u=\dot r,\ w=r\dot\theta,\ V=\sqrt{u^2+w^2}$；流率 $q=-\dot m\ge0$，推力 $T=cq$。
+\[
+\begin{aligned}
+ \dot r&=u,\qquad \dot\theta=w/r,\qquad \dot m=-q,\\
+ \dot u&=\frac{w^2}{r}+\frac{cq\cos\alpha}{m}-\frac{\mu}{r^2}
+ -\frac{kVu}{m}+a_{\varepsilon,r},\\
+ \dot w&=-\frac{uw}{r}+\frac{cq\sin\alpha}{m}
+ -\frac{kVw}{m}+a_{\varepsilon,\theta}.
+\end{aligned}
+\]
+其中 $k=\rho C_DA/2$，$\rho=\rho_0e^{-(r-R_E)/H}$；推力方向 $\alpha=\operatorname{atan2}(w,u)+\delta$，起飞时短暂竖直保持。
+\[
+ a_{\varepsilon,j}=\sigma_{0,j}(\rho/\rho_{\rm ref})\eta_j(t).
+\]
+\smallnote{高斯扰动采用连续插值的有限时间相关过程，而非理想白噪声。模型为平面质点模型，忽略地球自转、升力与姿态执行机构。}
+\columnend\colsep
+\columnstart
+\sect{02}{轨道规划与反馈控制}
+\subhead{两段燃烧：PSO 搜索 + SQP 精修}
+采用“亚轨道燃烧—滑行—圆轨化燃烧”，搜索推力偏角节点、排出流率和阶段时长。粒子群结合个体经验与邻域最优进行无梯度搜索，再以 SQP 修正终端残差。
+\[
+ r_*=R_E+600\,\mathrm{km},\quad v_c=\sqrt{\mu/r_*},
+\]
+\[
+ J=\left(\frac{r_f-r_*}{s_h}\right)^2+
+ \left(\frac{u_f}{s_u}\right)^2+
+ \left(\frac{w_f-v_c}{s_w}\right)^2.
+\]
+\includegraphics[width=\linewidth,height=31mm]{images/planning_zh.pdf}
+\smallnote{左：PSO 最优目标值；右：最终参考流率。燃烧/滑行/燃烧约为 153.3 / 250.0 / 62.0 s。最终精度来自 PSO 与局部精修的共同作用。}
+\subhead{ODE 前向求解}
+龙格–库塔法将候选控制映射为状态轨迹。GPU 批量 RK4 用于加速搜索，高精度自适应 Dormand–Prince 方法用于复核，并检测燃尽、落地事件。
+\subhead{MPC：测量 → 预测 → QP → 执行首项}
+跟踪参考状态 $x^{\rm ref}=(r,\theta,u,w,m)^\mathsf T$，控制量为偏角与流率修正。沿参考离散线性化后：
+\[
+ e_{k+1}=A_ke_k+B_kv_k+d_k.
+\]
+预测误差、控制幅值、变化率及松弛量的二次代价，经状态消元凝聚为凸二次规划：
+\[
+ \min_\zeta\ \tfrac12\zeta^\mathsf TH\zeta+f^\mathsf T\zeta,
+ \qquad G\zeta\le b.
+\]
+\textbf{QP 使用凸内点法}，处理偏角、流率、干质量及地面约束。每次仅执行首个修正，再反馈求解；保留原两段燃烧时序。
+\takeaway{离线规划提供可行参考，在线 MPC 补偿受扰动后的状态偏差。}
+\columnend\colsep
+\columnstart
+\sect{03}{600 km 算例与结果}
+\smallnote{$m_0=60\,000$ kg，$m_{\rm dry}=1\,200$ kg，$c=4\,500$ m/s。开环与闭环使用相同实际扰动；该扰动样本与规划样本不同。}
+\includegraphics[width=\linewidth,height=36mm]{images/trajectory_zh.pdf}
+\includegraphics[width=\linewidth,height=30mm]{images/error_zh.pdf}
+\smallnote{MPC 与参考轨迹在上图基本重合。位置误差为径向误差与地表弧长误差的合成；对数图的零值仅为绘图设置下限。}
+\vspace{2pt}
+{\fontsize{8.1}{10.3}\selectfont
+\setlength{\tabcolsep}{3pt}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrr@{}}
+\toprule
+指标 & 开环 & MPC\\\midrule
+位置跟踪 RMS / m & $5.98\times10^4$ & $2.606$\\
+速度跟踪 RMS / (m/s) & $298.084$ & $0.0992$\\
+关机高度误差 / m & $-77\,611.6$ & $1.191$\\
+关机径向速度 / (m/s) & $-557.983$ & $0.0231$\\
+切向速度误差 / (m/s) & $233.256$ & $0.0559$\\\bottomrule
+\end{tabular*}}
+\smallnote{RMS 相对参考轨迹；关机误差相对目标圆轨道。}
+\takeaway{反馈显著抑制误差积累，终端状态接近目标圆轨道。}
+\smallnote{边界：一次扰动试验、理想状态反馈与简化大气模型。结果不构成全局最优、统计鲁棒性或严格闭环稳定性的证明。}
+\columnend
+\posterfooter{参考：Tsiolkovsky 火箭方程（NASA Glenn）；Kennedy \& Eberhart, Particle Swarm Optimization, 1995；Dormand \& Prince, JCAM, 1980；Mayne et al., Automatica, 2000；Nocedal \& Wright, Numerical Optimization, 2006。\quad 数据：本项目 2026-10-20 冻结实验快照。}
+\end{document}

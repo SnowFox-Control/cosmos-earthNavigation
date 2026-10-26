@@ -1,0 +1,30 @@
+\usepackage[a3paper,portrait,margin=11mm]{geometry}
+\usepackage{amsmath,amssymb,bm,graphicx,booktabs,array,xcolor}
+\usepackage{newtxtext,newtxmath}
+\usepackage{microtype}
+\usepackage{fix-cm}
+\usepackage[colorlinks=true,urlcolor=teal]{hyperref}
+\definecolor{navy}{HTML}{152C46}
+\definecolor{teal}{HTML}{007C83}
+\definecolor{muted}{HTML}{526171}
+\definecolor{pale}{HTML}{EAF4F3}
+\definecolor{line}{HTML}{CFD8E0}
+\pagestyle{empty}
+\linespread{1.0}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt}
+\setlength{\abovedisplayskip}{2pt}
+\setlength{\belowdisplayskip}{2pt}
+\setlength{\abovedisplayshortskip}{2pt}
+\setlength{\belowdisplayshortskip}{2pt}
+\newcommand{\sect}[2]{\par\vspace{2pt}{\color{teal}\bfseries\fontsize{13.5}{16}\selectfont #1\quad #2}\par\vspace{1pt}{\color{line}\hrule}\vspace{2pt}}
+\newcommand{\subhead}[1]{\par\vspace{2pt}{\bfseries\color{navy}#1}\par}
+\newcommand{\smallnote}[1]{{\fontsize{8.6}{10.7}\selectfont\color{muted}#1\par}}
+\newcommand{\takeaway}[1]{\par\vspace{3pt}\colorbox{pale}{\parbox{\dimexpr\linewidth-2\fboxsep}{\bfseries\color{teal}#1}}\par}
+\newcommand{\posterheader}[3]{\colorbox{navy}{\parbox{\dimexpr\textwidth-2\fboxsep}{\vspace{5mm}\hspace{3mm}\begin{minipage}{\dimexpr\linewidth-6mm}\color{white}{\bfseries\fontsize{24}{27}\selectfont #1\par}\vspace{2mm}{\fontsize{11}{14}\selectfont #2\hfill #3}\end{minipage}\vspace{5mm}}}\par\vspace{4mm}}
+\newcommand{\columnstart}{\begin{minipage}[t]{0.318\textwidth}\vspace{0pt}}
+\newcommand{\columnend}{\end{minipage}}
+\newcommand{\colsep}{\hfill}
+\newcommand{\posterfooter}[1]{\par\vspace{3mm}{\color{line}\hrule}\vspace{1.5mm}{\fontsize{8}{10}\selectfont\color{muted}#1\par}}
+
+\newcommand{\extrablock}[1]{\par\vspace{5pt}{\color{teal}\bfseries\fontsize{12}{15}\selectfont #1}\par\vspace{2pt}}
