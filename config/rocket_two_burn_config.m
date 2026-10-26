@@ -28,8 +28,8 @@ opt.objectiveScale=[10000 1000 1000]; % [height m, radial m/s, tangential m/s]
 opt.rampSeconds=.5;
 % Columns: angle1 angle2 angle3 angle4 angle5 q1 q2 burn1 coast burn2
 % Units: degrees (1:5), kg/s (6:7), seconds (8:10).
-opt.lb=[0 -10 -10 -10 -10 180 120 80 20 25];
-opt.ub=[10 10 10 10 10 350 350 180 250 120];
+opt.lb=[0 -15 -15 -15 -15 180 120 80 20 25];
+opt.ub=[15 15 15 15 15 350 350 240 400 150];
 assert(opt.swarmSize>=8 && opt.swarmSize==floor(opt.swarmSize));
 assert(opt.heuristicFraction>=0 && opt.heuristicFraction<=1);
 assert(all(opt.objectiveScale>0) && opt.maxIterations>=1 && p.turnStart>0);
