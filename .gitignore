@@ -1,0 +1,46 @@
+# ---------------------------------------------------------------- 生成物
+# 动画体积大（约 76 MB），可由 run_rocket('animate') 重新生成，不入库
+results/animations/
+# 海报位图预览（可由 xelatex 编译后重新导出）
+poster/preview/
+# 本次会话的权限修复备份
+.dsh-acl-recovery/
+
+# ---------------------------------------------------------------- LaTeX 中间文件
+*.aux
+*.log
+*.out
+*.toc
+*.nav
+*.snm
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.synctex(busy)
+*.bbl
+*.blg
+
+# ---------------------------------------------------------------- MATLAB
+*.asv
+*.autosave
+*.m~
+slprj/
+*.slxc
+*.slx.autosave
+
+# ---------------------------------------------------------------- Python
+__pycache__/
+*.py[cod]
+
+# ---------------------------------------------------------------- 临时目录
+paper/_preview/
+paper/figures/_preview/
+tmp/
+.tmp/
+
+# ---------------------------------------------------------------- 系统与编辑器
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/

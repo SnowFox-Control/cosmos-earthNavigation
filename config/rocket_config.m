@@ -1,0 +1,31 @@
+function [p, control] = rocket_config()
+%ROCKET_CONFIG Demonstration parameters in SI units (not a real vehicle).
+p.mu = 3.986004418e14;
+p.Re = 6371000;
+p.rho0 = 1.225;
+p.H = 8500;
+p.Cd = 0.35;
+p.A = 2.0;
+p.c = 3000;                 % Effective exhaust speed, m/s
+p.m0 = 24000;
+p.mdry = 6000;
+p.h0 = 1;                  % Starts 1 m above surface to avoid initial ground event
+p.theta0 = 0;
+p.u0 = 0;
+p.w0 = 0;
+p.tf = 400;
+p.turnStart = 5;            % Initial vertical thrust hold, seconds
+p.maxStep = 0.5;
+p.relTol = 1e-8;
+p.absTol = [1e-4 1e-11 1e-6 1e-6 1e-6 1e-2];
+p.qMax = 350;
+p.deltaMax = 10*pi/180;
+p.noise.enabled = true;
+p.noise.sigma0 = [0.1 0.1];      % Radial/tangential std, m/s^2 at reference density
+p.noise.referenceDensity = 1.225; % kg/m^3; amplitude is proportional to rho
+p.noise.sampleInterval = 1;     % s, Gaussian sample spacing (finite-band model)
+p.noise.seed = 20261020;        % Independent of the optimizer random seed
+control.t = [0 5 15 25 80 160];
+control.delta = [0 0 2 0 0 0]*pi/180;
+control.q = [220 220 220 220 220 220];
+end
