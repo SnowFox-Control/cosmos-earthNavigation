@@ -1,6 +1,8 @@
 # ---------------------------------------------------------------- 生成物
 # 动画体积大（约 76 MB），可由 run_rocket('animate') 重新生成，不入库
 results/animations/
+# MPC 入口需要的同内容副本（由 experiments/relaxed_verify.m 生成）
+results/data/rocket_two_burn_relaxed_ref.mat
 # 海报位图预览（可由 xelatex 编译后重新导出）
 poster/preview/
 # 本次会话的权限修复备份

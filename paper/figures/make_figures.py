@@ -52,10 +52,11 @@ def load(name):
                        struct_as_record=False)
 
 
-plan = load("rocket_two_burn_result.mat")["result"]
-mpc = load("rocket_mpc_result.mat")["result"]
-coast = load("rocket_orbit_coast.mat")["coastResult"]
+plan = load("rocket_two_burn_relaxed.mat")["r"]
+mpc = load("rocket_mpc_relaxed.mat")["m"]
+coast = load("rocket_orbit_coast_relaxed.mat")["coastResult"]
 bench = load("rocket_acceleration_benchmark.mat")["report"]
+base = load("rocket_two_burn_result.mat")["result"]
 
 p = plan.p
 o = plan.out
@@ -343,7 +344,7 @@ def fig_pso():
             label="SQP 精修后")
     ax.set_xlabel("迭代代数")
     ax.set_ylabel("归一化目标函数 $J$")
-    ax.set_ylim(1e-9, 3e3)
+    ax.set_ylim(1e-17, 3e3)
     ax.grid(alpha=0.25, lw=0.5, which="both")
     ax.legend(frameon=False, loc="lower left")
     fig.tight_layout()
@@ -479,6 +480,39 @@ def fig_qp():
     plt.close(fig)
 
 
+# ---------------------------------------------------------------- figure 11
+def fig_compare():
+    """Baseline (tight bounds) versus relaxed bounds."""
+    fig, axs = plt.subplots(2, 2, figsize=(6.4, 4.1))
+    rows = [(base, GREY, "基线：±10°，滑行 ≤250 s"),
+            (plan, RED, "放宽：±15°，滑行 ≤400 s")]
+    panels = [("h", "高度 / km", "(a) 高度"),
+              ("q", "流率 / (kg/s)", "(b) 流率"),
+              ("delta", "推力偏角 / (°)", "(c) 推力偏角"),
+              ("qdyn", "动压 / kPa", "(d) 动压")]
+    for ax, (key, ylab, title) in zip(axs.ravel(), panels):
+        for r, c, lab in rows:
+            o = r.out
+            t = np.atleast_1d(o.t)
+            if key == "h":
+                y = np.atleast_1d(o.h) / 1e3
+            elif key == "q":
+                y = np.atleast_1d(o.q)
+            elif key == "delta":
+                y = np.degrees(np.atleast_1d(o.delta))
+            else:
+                y = np.atleast_1d(o.dynamicPressure) / 1e3
+            ax.plot(t, y, color=c, label=lab)
+        ax.set_xlabel("时间 / s")
+        ax.set_ylabel(ylab)
+        ax.grid(alpha=0.25, lw=0.5)
+        ax.set_title(title, loc="left", fontsize=8.6)
+    axs[0, 0].legend(frameon=False, loc="upper left")
+    fig.tight_layout()
+    fig.savefig(os.path.join(OUT, "fig_compare.pdf"))
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     fig_model()
     fig_trajectory()
@@ -490,6 +524,7 @@ if __name__ == "__main__":
     fig_mpc_error()
     fig_coast()
     fig_qp()
+    fig_compare()
     tt, ref, cl, op, pos_cl, pos_op, vel_cl, vel_op = mpc_errors()
     summary.update({
         "mpc_time": float(tt[-1]),

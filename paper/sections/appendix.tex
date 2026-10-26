@@ -1,7 +1,6 @@
 \section{主要符号表}
 
-\begin{table}[h]
-\centering
+\begin{center}
 \small
 \renewcommand{\arraystretch}{1.18}
 \begin{tabular}{@{}lll@{}}
@@ -35,20 +34,25 @@ $A_k,\ B_k,\ \bvec d_k$ & 时变线性化矩阵与仿射项 & --\\
 $Q,\ R,\ R_\Delta$ & 状态、控制、控制变化率权重 & --\\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{center}
 
 \section{复现方式}
 \label{app:reproduce}
 
-论文的源文件、绘图脚本与全部结果位于项目的 \texttt{paper/} 与 \texttt{results/} 目录：
+论文的源文件、绘图脚本与全部结果位于项目的 \texttt{paper/}、\texttt{experiments/}
+与 \texttt{results/} 目录：
 
 \begin{verbatim}
 paper/
   main.tex                 主文件（XeLaTeX + ctex）
   sections/*.tex           各章节源文件
   figures/make_figures.py  由 MAT 结果重新生成全部矢量图
-  figures/fig_*.pdf        10 幅矢量图
+  figures/fig_*.pdf        11 幅矢量图
   main.pdf                 编译产物
+experiments/
+  relaxed_bounds.m         放宽边界后的 PSO+SQP 复算驱动
+  relaxed_verify.m         该解的滑行验证与 MPC 运行
+  compare_relaxed.py       紧约束解与放宽解的对比表/图
 \end{verbatim}
 
 编译：
@@ -65,27 +69,34 @@ xelatex -interaction=nonstopmode main.tex   % 第二遍生成书签与交叉引�
 python paper/figures/make_figures.py
 \end{verbatim}
 
-复现计算（MATLAB，需要 Global Optimization Toolbox、Optimization Toolbox，
+复现本文结果（MATLAB，需要 Global Optimization Toolbox、Optimization Toolbox，
 可选 Parallel Computing Toolbox 与支持 CUDA 的 GPU）：
 
 \begin{verbatim}
-run_rocket('optimize')    % PSO + SQP，约 2 min
-run_rocket('mpc')         % 闭环 + 开环对照，约 2 s
-run_rocket('benchmark')   % GPU 与 CPU 批量计时
-run_rocket('verify')      % 物理、扰动与入轨验证
-run_rocket('animate')     % 双火箭动画（不含结论）
+% 1) 放宽边界后的规划（本文正文所用的解）
+matlab -batch "run('experiments/relaxed_bounds.m')"
+% 2) 该解的滑行验证与 MPC
+matlab -batch "run('experiments/relaxed_verify.m')"
+% 3) 与紧约束解的对比表与图
+python experiments/compare_relaxed.py
+% 4) GPU 计时（与边界无关）
+run_rocket('benchmark')
 \end{verbatim}
 
-各入口的主要产物：
+正文各图对应的结果文件：
 
 \begin{itemize}
-\item \texttt{rocket\_two\_burn\_result.mat}：最终规划结果；
-\item \texttt{rocket\_orbit\_final.mat}：供验证器读取的同一份结果；
-\item \texttt{rocket\_orbit\_controls.csv}：控制节点；
-\item \texttt{rocket\_orbit\_coast.mat}：滑行验证；
-\item \texttt{rocket\_mpc\_result.mat}：闭环与开环；
-\item \texttt{rocket\_acceleration\_benchmark.mat}：计时。
+\item \texttt{rocket\_two\_burn\_relaxed.mat}：本文的规划结果（设计变量、终端残差、
+      时序、质量、完整轨迹）；
+\item \texttt{rocket\_orbit\_coast\_relaxed.mat}：关机后一个周期的滑行验证；
+\item \texttt{rocket\_mpc\_relaxed.mat}：闭环与开环对照、QP 统计；
+\item \texttt{rocket\_two\_burn\_result.mat}：紧约束（旧）解，仅用于
+      \S\ref{sec:bounds} 的对比；
+\item \texttt{rocket\_acceleration\_benchmark.mat}：GPU 与串行 CPU 计时。
 \end{itemize}
+
+注意：\texttt{rocket\_two\_burn\_relaxed\_ref.mat} 只是把同一结果以
+\texttt{result} 变量名另存，供 MPC 入口按统一接口读取。
 
 \paragraph{关于可复现性的说明。}
 规划阶段的随机种子固定为 161、扰动种子固定为 20261020，
@@ -93,3 +104,6 @@ run_rocket('animate')     % 双火箭动画（不含结论）
 若 GPU 不可用而回退到 CPU 并行，PSO 的评估顺序可能改变，
 末端 SQP 的初值会有微小差异，但终端精度量级不变。
 MPC 的实际扰动种子固定为 20261021，闭环轨迹可逐点复现。
+需要强调，本文的“复现”指同一硬件后端下的数值复现；
+不同积分档位（\texttt{fast}/\texttt{precise}）给出的残差可以相差数个数量级，
+不能混用。
