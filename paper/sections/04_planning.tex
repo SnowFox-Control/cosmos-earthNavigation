@@ -1,0 +1,205 @@
+\section{两段燃烧入轨规划}
+\label{sec:planning}
+
+\subsection{设计变量与解码}
+
+沿用工程上成熟的“亚轨道燃烧—滑行—圆轨化燃烧”结构，把两个控制函数压缩为 10 个标量：
+\begin{equation}
+\bvec z=[\,\delta_1,\delta_2,\delta_3,\delta_4,\delta_5,\ q_1,\ q_2,\ t_1,\ t_c,\ t_2\,],
+\label{eq:z}
+\end{equation}
+依次为第一段的三个偏角节点、第二段的起止偏角、两段平台流率、第一段时长、
+滑行时长与第二段时长。由 $\bvec z$ 解码出 11 个控制节点（表~\ref{tab:nodes}）：
+
+\begin{align}
+t_1^{-}&=t_1-\Delta t_{\mathrm{ramp}},\qquad
+t_{\mathrm{ign}}=t_1+t_c,\qquad
+t_f=t_{\mathrm{ign}}+t_2,\\
+\delta(t)&=\big[\,0,\ 0,\ \delta_1,\ \delta_2,\ \delta_3,\ \delta_3,\
+\delta_4,\ \tfrac{\delta_4+\delta_5}{2},\ \delta_5,\ \delta_5,\ \delta_5\,\big],\\
+q(t)&=\big[\,q_1,\ q_1,\ q_1,\ q_1,\ q_1,\ 0,\ 0,\ q_2,\ q_2,\ q_2,\ 0\,\big],
+\end{align}
+节点时刻依次为
+$0,\ t_{\mathrm{turn}},\ 0.2t_1,\ 0.6t_1,\ t_1^-,\ t_1,\ t_{\mathrm{ign}},\
+t_{\mathrm{ign}}+\Delta t_{\mathrm{ramp}},\ t_{\mathrm{ign}}+0.5t_2,\ t_f^-,\ t_f$。
+
+两点说明。第一，第一段的三个角度节点并非等间隔，而是取第一段时长的 20\% 与 60\%，
+这样无论 $t_1$ 如何变化，早期转向都发生在“还在稠密大气里”的阶段。
+第二，$t_{\mathrm{turn}}=5\,\mathrm{s}$ 之前的偏角被强制归零（竖直上升），
+既避开零速度处的方向奇异，也让优化器不必浪费两个自由度的搜索预算。
+
+\begin{table}[t]
+\centering
+\caption{最优解对应的 11 个控制节点（$\delta$ 单位 $^\circ$，$q$ 单位 kg/s）}
+\label{tab:nodes}
+\small
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+序号 & 节点含义 & $t$ / s & $\delta$ & $q$\\
+\midrule
+1 & 起飞 & 0 & 0 & 263.96\\
+2 & 竖直保持结束 & 5.000 & 0 & 263.96\\
+3 & 第一段 20\% 时刻 & 30.655 & 3.561 & 263.96\\
+4 & 第一段 60\% 时刻 & 91.965 & 7.558 & 263.96\\
+5 & 第一段关机过渡起点 & 152.776 & $-7.281$ & 263.96\\
+6 & 第一段关机 & 153.276 & $-7.281$ & 0\\
+7 & 第二次点火 & 403.276 & 10.000 & 0\\
+8 & 点火过渡结束 & 403.776 & 10.000 & 217.63\\
+9 & 第二段中点 & 434.267 & 10.000 & 217.63\\
+10 & 关机过渡起点 & 464.758 & 10.000 & 217.63\\
+11 & 最终关机 & 465.258 & 10.000 & 0\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+由表~\ref{tab:nodes} 可见控制形状：第一段先朝切向偏转（$3.56^\circ\to7.56^\circ$）
+以积累水平速度，随后反向偏转至 $-7.28^\circ$ 抑制过快的爬升；
+滑行的 250\,s 内流率为零；第二段以接近上限的 $10^\circ$ 偏角持续加速，
+最终把速度“压”到圆轨道值。
+
+\subsection{目标函数与罚项}
+
+终端条件~\eqref{eq:terminal-constraint} 的三个分量量纲不同（m 与 m/s），
+直接求平方和会让高度项被速度项淹没。采用固定尺度归一化：
+\begin{equation}
+J(\bvec z)=\left(\frac{h_f-h_*}{s_h}\right)^2+
+\left(\frac{u_f}{s_u}\right)^2+
+\left(\frac{w_f-v_c}{s_w}\right)^2,
+\qquad (s_h,s_u,s_w)=(10^4\,\mathrm{m},\,10^3,\,10^3\,\mathrm{m/s}).
+\label{eq:J}
+\end{equation}
+尺度不是验收容差，而是“希望优化器优先关心哪个量”的权重：$s$ 越小权重越大。
+在本问题中高度误差 10\,km 与速度误差 1000\,m/s 贡献相同的惩罚。
+
+\begin{equation}
+J_{\mathrm{pen}}(\bvec z)=
+\begin{cases}
+10^3+\left(\dfrac{m_{\mathrm{used}}-(m_0-m_{\mathrm{dry}})}{1000}\right)^{2},
+& m_{\mathrm{used}}>m_0-m_{\mathrm{dry}},\\[8pt]
+J(\bvec z), & \text{否则},
+\end{cases}
+\end{equation}
+并且若轨迹中途触地，再加 $100+(t_f-t_{\mathrm{impact}})$。
+燃料罚项取 1000 的量级，远大于任何可行解的 $J$，从而把不可行个体排到种群末尾；
+触地罚项随“差多远就落地”连续变化，避免所有坠地个体并列同一分数而失去梯度信息。
+
+\subsection{粒子群优化}
+
+PSO\cite{kennedy1995pso,shi1998} 把每个候选视为无质量粒子，按
+\begin{align}
+\bvec v_i^{k+1}&=\omega\bvec v_i^{k}+c_1r_1\odot(\bvec p_i-\bvec x_i^{k})
++c_2r_2\odot(\bvec g_i-\bvec x_i^{k}),\\
+\bvec x_i^{k+1}&=\bvec x_i^{k}+\bvec v_i^{k+1},
+\end{align}
+更新，其中 $\bvec p_i$ 为个体历史最优，$\bvec g_i$ 为邻域最优，$r_1,r_2\sim U(0,1)$。
+本文取自适应惯性 $\omega\in[0.1,1.1]$、$c_1=c_2=1.49$、最小邻域比例 0.25，
+这组参数使算法在中后期逐渐从“探索”转向“开发”。搜索在归一化空间
+$\bvec{\zeta}\in[0,1]^{10}$ 中进行，$\bvec z=\bvec z_{\mathrm{lb}}+\bvec\zeta\odot
+(\bvec z_{\mathrm{ub}}-\bvec z_{\mathrm{lb}})$，避免不同量纲的变量更新步长失衡。
+
+\begin{table}[t]
+\centering
+\caption{设计变量上下界（单位：$^\circ$、kg/s、s）}
+\label{tab:bounds}
+\small
+\begin{tabular}{@{}clrrl@{}}
+\toprule
+下标 & 变量 & 下界 & 上界 & 说明\\
+\midrule
+1 & 第一段早期偏角 & 0 & 10 & 只允许朝顺航向\\
+2 & 第一段中期偏角 & $-10$ & 10 & \\
+3 & 第一段末期偏角 & $-10$ & 10 & 用于抑制爬升率\\
+4 & 第二段起始偏角 & $-10$ & 10 & \\
+5 & 第二段末期偏角 & $-10$ & 10 & \\
+6 & 第一段平台流率 & 180 & 350 & 受 $q_{\max}$ 约束\\
+7 & 第二段平台流率 & 120 & 350 & \\
+8 & 第一段时长 & 80 & 180 & 保证 $0.2t_1>t_{\mathrm{turn}}$\\
+9 & 滑行时长 & 20 & 250 & \\
+10 & 第二段时长 & 25 & 120 & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+种群规模 96、最大迭代 180、停滞窗口 80 代、随机种子 161（固定以便复现），
+具体实现调用 MATLAB 的 \texttt{particleswarm}\cite{mathworks2025}。
+初始种群的一半随机生成，另一半按“第一段约消耗三分之二燃料、第二段消耗剩余大部分”
+的工程直觉构造：先抽取 $q_1\in[260,330]$、$q_2\in[200,300]$，再由预算反解
+$t_1$ 与 $t_2$，并令滑行时间在 $[40,170]\,\mathrm{s}$ 内取值。
+这样做的目的不是给优化器“喂答案”，而是让种群一开始就包含若干结构合理、
+只是终端精度不够的个体，减少在无意义区域（例如第二段几乎不点火）的浪费。
+
+\subsection{SQP 局部精修}
+
+PSO 停止后，以其最优个体为初值调用 \texttt{fmincon} 的 SQP 算法\cite{nocedal2006}：
+\begin{equation}
+\min_{\bvec\zeta\in[0,1]^{10}}\ J(\bvec\zeta)
+\quad\text{s.t.}\quad
+\int_0^{t_f}q(t;\bvec\zeta)\dd t-(m_0-m_{\mathrm{dry}})\le 0 .
+\label{eq:sqp}
+\end{equation}
+有限差分用中心差分（步长 $10^{-5}$），最大迭代 160、最大函数评估 6000，
+最优性容差 $10^{-9}$、步长容差 $10^{-10}$，目标函数用 \texttt{precise} 档积分。
+注意目标函数本身已经是三个终端残差的平方和，因此 SQP 实际上在解一个
+“终端等式约束 + 燃料不等式约束”的最小二乘问题；当可行方向足够多时，
+它可以把残差压到积分误差以下。
+
+\subsection{优化结果}
+
+表~\ref{tab:plan} 给出最终设计变量与终端状态。目标函数从 PSO 结束时的 \mbox{$7.01\times10^{-2}$}
+降到 \mbox{$3.30\times10^{-9}$}，终端残差从“数百米、数百米每秒”降到“亚米、厘米每秒”。
+
+\begin{table}[t]
+\centering
+\caption{规划结果：设计变量与终端状态}
+\label{tab:plan}
+\small
+\begin{tabular}{@{}llr@{}}
+\toprule
+类别 & 量 & 数值\\
+\midrule
+偏角 & $\delta_1,\delta_2,\delta_3$ & $3.561,\ 7.558,\ -7.281^\circ$\\
+ & $\delta_4,\delta_5$ & $10.000,\ 9.9996^\circ$\\
+ & 最大偏角 & $10.000^\circ$（达到上界）\\
+\midrule
+流率 & $q_1$ & 263.963\,kg/s\\
+ & $q_2$ & 217.628\,kg/s\\
+\midrule
+时序 & 第一段关机 & 153.276\,s\\
+ & 第二次点火 & 403.276\,s\\
+ & 最终关机 & 465.258\,s\\
+\midrule
+终端 & 高度误差 & $+0.265$\,m\\
+ & 径向速度 & $-0.0212$\,m/s\\
+ & 切向速度（目标 $7561.733$） & $7561.779$\,m/s\\
+ & 密切轨道偏心率 & $1.26\times10^{-5}$\\
+\midrule
+资源 & 推进剂消耗 & 53\,773.6\,kg（预算 58\,800）\\
+ & 终端质量 & 6\,226.4\,kg\\
+ & 总冲量 & 241.98\,MN$\cdot$s\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{两类算法的分工}
+
+把两个阶段的残差并列，可以看清它们各自的作用：
+PSO 结束时终端误差为 $-735.9\,\mathrm{m}$、$254.7\,\mathrm{m/s}$、$3.51\,\mathrm{m/s}$，
+按验收标准（500\,m、10\,m/s）\textbf{并不合格}；SQP 精修后变为
+$0.265\,\mathrm{m}$、$-0.021\,\mathrm{m/s}$、$0.046\,\mathrm{m/s}$。
+这说明在本问题中：
+
+\begin{itemize}
+\item PSO 的价值在于\textbf{找到正确的燃烧结构}——两段各烧多久、滑行多长、
+角度大致朝哪边。它的搜索是全局的，不依赖初值梯度。
+\item SQP 的价值在于\textbf{把解推到终端流形上}。终端约束只有 3 个，
+而设计变量有 10 个，可行方向充足，故局部收敛极快、残差可以压得很低。
+\item 若只用 PSO，则受限于“随机搜索在高维末端收敛慢”，很难稳定进入米级；
+若只用 SQP 而从随机初值出发，则极易落到“第二段几乎不点火”之类的局部解。
+\end{itemize}
+
+另一个值得记录的观察是\textbf{最优解贴着边界}：$\delta_4=10.000^\circ$、
+$\delta_5=9.9996^\circ$ 达到偏角上界，$t_c=250.000\,\mathrm{s}$ 达到滑行上界。
+这意味着当前的米级残差并不是物理极限，而是被\textbf{人为的盒式约束}截断的结果。
+放宽偏角或滑行上界，很可能得到燃料更省或时序更宽松的解；本文保留现有上下界，
+是因为它们对应“教学模型允许的推力方向范围”，放宽会削弱结果的可解释性。
+这一点在 \S\ref{sec:discussion} 还会讨论。

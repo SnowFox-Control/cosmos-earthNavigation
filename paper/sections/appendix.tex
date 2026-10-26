@@ -1,0 +1,95 @@
+\section{主要符号表}
+
+\begin{table}[h]
+\centering
+\small
+\renewcommand{\arraystretch}{1.18}
+\begin{tabular}{@{}lll@{}}
+\toprule
+符号 & 含义 & 单位\\
+\midrule
+$r,\ \theta$ & 地心距、极角 & m, rad\\
+$h$ & 离地高度 $r-R_E$ & m\\
+$u,\ w$ & 径向速度 $\dot r$、切向速度 $r\dot\theta$ & m/s\\
+$V$ & 速率 $\sqrt{u^2+w^2}$ & m/s\\
+$m,\ m_0,\ m_{\mathrm{dry}}$ & 瞬时、初始、干质量 & kg\\
+$I,\ I_T$ & 发动机标量总冲量、总冲量 & N$\cdot$s\\
+$q$ & 推进剂流率 & kg/s\\
+$c$ & 有效排气速度 & m/s\\
+$T$ & 推力 $cq$ & N\\
+$\delta$ & 推力相对速度方向的偏角（控制量） & rad\\
+$\alpha$ & 推力相对径向向外的夹角 $\beta+\delta$ & rad\\
+$\beta$ & 速度相对径向的夹角 $\arctan(w/u)$ & rad\\
+$\gamma$ & 航迹角 $\arctan(u/w)$ & rad\\
+$\rho,\ \rho_0,\ H$ & 大气密度、海平面密度、标高 & kg/m$^3$, m\\
+$C_D,\ A$ & 阻力系数、迎风面积 & --, m$^2$\\
+$\mu$ & 地球引力参数 & m$^3$/s$^2$\\
+$h_*,\ v_c$ & 目标高度、目标圆轨道速度 & m, m/s\\
+$\bvec z$ & 10 维设计变量 & 混合\\
+$J,\ J_{\mathrm{MPC}}$ & 规划目标、MPC 代价 & --\\
+$\bvec e,\ \tilde{\bvec e}$ & 跟踪误差、归一化跟踪误差 & 混合\\
+$\bvec\nu$ & 归一化控制修正 & --\\
+$T_s,\ N$ & MPC 控制周期、预测步数 & s, --\\
+$\sigma_0$ & 参考密度下的扰动标准差 & m/s$^2$\\
+$A_k,\ B_k,\ \bvec d_k$ & 时变线性化矩阵与仿射项 & --\\
+$Q,\ R,\ R_\Delta$ & 状态、控制、控制变化率权重 & --\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{复现方式}
+\label{app:reproduce}
+
+论文的源文件、绘图脚本与全部结果位于项目的 \texttt{paper/} 与 \texttt{results/} 目录：
+
+\begin{verbatim}
+paper/
+  main.tex                 主文件（XeLaTeX + ctex）
+  sections/*.tex           各章节源文件
+  figures/make_figures.py  由 MAT 结果重新生成全部矢量图
+  figures/fig_*.pdf        10 幅矢量图
+  main.pdf                 编译产物
+\end{verbatim}
+
+编译：
+
+\begin{verbatim}
+cd paper
+xelatex -interaction=nonstopmode main.tex
+xelatex -interaction=nonstopmode main.tex   % 第二遍生成书签与交叉引用
+\end{verbatim}
+
+重新生成图（不改动任何 MATLAB 结果，只读取 \texttt{results/data/}）：
+
+\begin{verbatim}
+python paper/figures/make_figures.py
+\end{verbatim}
+
+复现计算（MATLAB，需要 Global Optimization Toolbox、Optimization Toolbox，
+可选 Parallel Computing Toolbox 与支持 CUDA 的 GPU）：
+
+\begin{verbatim}
+run_rocket('optimize')    % PSO + SQP，约 2 min
+run_rocket('mpc')         % 闭环 + 开环对照，约 2 s
+run_rocket('benchmark')   % GPU 与 CPU 批量计时
+run_rocket('verify')      % 物理、扰动与入轨验证
+run_rocket('animate')     % 双火箭动画（不含结论）
+\end{verbatim}
+
+各入口的主要产物：
+
+\begin{itemize}
+\item \texttt{rocket\_two\_burn\_result.mat}：最终规划结果；
+\item \texttt{rocket\_orbit\_final.mat}：供验证器读取的同一份结果；
+\item \texttt{rocket\_orbit\_controls.csv}：控制节点；
+\item \texttt{rocket\_orbit\_coast.mat}：滑行验证；
+\item \texttt{rocket\_mpc\_result.mat}：闭环与开环；
+\item \texttt{rocket\_acceleration\_benchmark.mat}：计时。
+\end{itemize}
+
+\paragraph{关于可复现性的说明。}
+规划阶段的随机种子固定为 161、扰动种子固定为 20261020，
+因此在同一 MATLAB 版本、同一硬件后端下应得到相同结果；
+若 GPU 不可用而回退到 CPU 并行，PSO 的评估顺序可能改变，
+末端 SQP 的初值会有微小差异，但终端精度量级不变。
+MPC 的实际扰动种子固定为 20261021，闭环轨迹可逐点复现。

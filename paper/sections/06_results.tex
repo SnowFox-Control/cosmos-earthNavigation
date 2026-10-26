@@ -1,0 +1,205 @@
+\section{结果与分析}
+\label{sec:results}
+
+本节所有数值均由保存的结果文件重新读取、重新绘图，绘图脚本随论文一并给出
+（附录~\ref{app:reproduce}）。
+
+\subsection{轨迹与飞行剖面}
+
+图~\ref{fig:trajectory} 给出惯性平面内的轨迹与“高度—航程”剖面。整条轨迹只覆盖
+8.70$^\circ$ 的极角、967.4\,km 的地表航程，相对地球周长是很小的一段；
+在惯性平面图上，它几乎是贴着地表的细线，这也解释了为什么近地入轨对\textbf{速度方向}
+极其敏感：高度只增加 600\,km，而切向速度要从 0 增加到 7.56\,km/s。
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{fig_trajectory.pdf}
+\caption{两段燃烧入轨轨迹。(a) 地心惯性平面：蓝、灰、红分别对应第一段燃烧、
+无推力滑行与圆轨化燃烧，点划线为 600\,km 目标圆轨道，空心圆为入轨点；
+(b) 高度—航程剖面，方块标出第一次关机（160.4\,km）与第二次点火（571.6\,km）。}
+\label{fig:trajectory}
+\end{figure}
+
+三个阶段的划分很清楚：第一段在 153.28\,s 内把高度推到 160.4\,km，
+径向与切向速度分别达到 2.63\,km/s 与 2.60\,km/s，航迹角约 $45^\circ$；
+滑行 250\,s 期间高度继续上升到 571.6\,km，径向速度由 2.63\,km/s 衰减到
+0.69\,km/s，切向速度基本维持在 2.45--2.60\,km/s；
+第二段用 61.98\,s 把切向速度由 2.45\,km/s 提升到 7.56\,km/s，
+同时把径向速度压回零。注意滑行末段火箭仍未过远地点（那里径向速度仍为
+$+0.69$\,km/s），真正的远地点出现在第二段末段，这正是“有限推力圆轨化”与
+“远地点瞬时脉冲”两种图景的差别。
+
+图~\ref{fig:states} 从时间维度重复这一过程。值得注意的有两点：
+滑行段质量恒定在 19.61\,t，说明流率确实为零、没有“偷偷点火”；
+切向速度在第二段几乎线性上升，说明该段流率恒定、偏角稳定，
+推力几乎全部用于加速而非转向。
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{fig_states.pdf}
+\caption{状态时间历程。(a) 高度；(b) 径向与切向速度，点划线为圆轨道速度
+7561.73\,m/s；(c) 质量；(d) 速率。竖直点线标出第一次关机（红）与第二次点火（橙）。}
+\label{fig:states}
+\end{figure}
+
+\subsection{控制形状与载荷}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{fig_control.pdf}
+\caption{控制量与载荷。(a) 推力偏角 $\delta(t)$，圆点为 11 个节点；(b) 流率
+$q(t)$，可见 0.5\,s 的启停过渡；(c) 动压，峰值 47.79\,kPa 出现在 42.0\,s；
+(d) 过载 $T/(m g_0)$，末端因质量小而升至 15.9\,g。}
+\label{fig:control}
+\end{figure}
+
+图~\ref{fig:control} 揭示了一个必须承认的模型缺陷：过载在第二段末段升到 15.9\,g。
+原因是推力固定为 $cq\approx0.98$\,MN，而质量已降到 6.2\,t，加速度 $T/m$ 迅速增大。
+真实的载人或不载人运载火箭通常把轴向过载限制在 4--6\,g，本算例的 15.9\,g 会
+超出结构与人体的承受范围。这不是数值错误，而是“单级、固定流率、不节流”
+这一教学假设的直接后果；若要让结果接近工程实际，必须让 $q$ 随过载反馈下调，
+或在模型中施加 $T/m\le a_{\max}$ 的约束。本文保留现有结果，是因为它忠实反映了
+所建模型的解，而不是为了“好看”去改参数。
+
+动压峰值 47.79\,kPa 出现在 42.0\,s，处于最大动压区的典型量级；
+峰值之后动压迅速衰减，说明第一段的加速段很快穿出了稠密大气。
+
+\subsection{优化收敛与计算成本}
+
+图~\ref{fig:pso} 是 PSO 的收敛曲线。种群均值从初代的 $1.17\times10^{3}$ 单调下降到
+末代的 15.29，最优值从 17.14 降到 $7.01\times10^{-2}$；末段仍有缓慢下降，
+说明 180 代尚未完全收敛。SQP 接手后目标值进一步降到 $3.30\times10^{-9}$，
+在图上是一个跨越七个数量级的跳跃。
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.62\linewidth]{fig_pso.pdf}
+\caption{PSO 收敛曲线与 SQP 精修结果。纵轴为对数坐标；PSO 结束时的目标值为
+$7.01\times10^{-2}$，对应终端误差 $-735.9$\,m、$254.7$\,m/s、$3.51$\,m/s，
+尚未达到验收标准。}
+\label{fig:pso}
+\end{figure}
+
+计算成本方面，一次完整优化耗时 125.3\,s（本机 MATLAB R2025b，RTX 5060 Laptop）。
+其中 GPU 批处理承担了绝大部分适应度评估。为量化加速效果，用同一条控制重复
+组成 96 条轨迹做对照实验（表~\ref{tab:bench}、图~\ref{fig:bench}）。
+
+\begin{table}[t]
+\centering
+\caption{同一 96 条轨迹批次的耗时对照（GPU 已预热）}
+\label{tab:bench}
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+计算方式 & 耗时 / s & 归一化目标值\\
+\midrule
+串行 CPU（\texttt{ode45}，自适应） & 9.834 & 0.4431\\
+GPU 批量（RK4，$h=0.05$\,s） & 0.324 & 0.4341\\
+\midrule
+比值 & 30.4 & 相对差 2.03\%\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+必须把话说清楚：30.4 倍是\textbf{“GPU 定步长批处理”与“CPU 自适应积分”两种方案}
+的综合差异，不是相同算法、相同误差水平下的纯硬件加速比。2.03\% 的目标值差异
+就是两种积分方式差异的直接证据。因此 GPU 只用于排序，最终结论一律回到 CPU。
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.78\linewidth]{fig_benchmark.pdf}
+\caption{GPU 批量与串行 CPU 的耗时（对数轴）与相同控制下的目标值对比。
+前者是工程加速手段，后者提醒两者并非同一算法。}
+\label{fig:bench}
+\end{figure}
+
+\subsection{入轨后滑行验证}
+
+关机后关闭发动机，保留原引力与指数大气阻力，从终端状态推进一个标称轨道周期：
+
+\begin{itemize}
+\item 标称周期 $T=2\pi\sqrt{(R_E+h_*)^3/\mu}=5792.33\,\mathrm{s}=96.54$\,min；
+\item 高度区间 599.998--600.174\,km，极差 176\,m；
+\item 该极差与瞬时密切轨道偏心率 $e=1.26\times10^{-5}$ 一致：
+      $a e\approx6971\,\mathrm{km}\times1.26\times10^{-5}\approx0.0878$\,km。
+\end{itemize}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.72\linewidth]{fig_coast.pdf}
+\caption{关机后一个轨道周期内的高度偏差（相对均值）。正弦形状来自密切轨道偏心率，
+振幅约 88\,m，与 $e=1.26\times10^{-5}$ 自洽。}
+\label{fig:coast}
+\end{figure}
+
+由于 600\,km 处仍有可观的模型大气，轨道会缓慢衰减；本文只推进一个周期，
+且高度衰减量（相对 600\,km 约 $10^{-4}$）远小于模型不确定度，故\textbf{不能}
+据此声称“长期保持 600\,km 圆轨道”，只能声称“瞬时近圆注入”。
+
+\subsection{闭环跟踪与开环对照}
+
+闭环试验使用规划轨迹作为参考，实际对象改用独立的扰动种子（20261021）。
+开环对照执行完全相同的规划前馈、相同的初始状态与相同的实际扰动，只是不做任何反馈，
+构成公平比较。结果见表~\ref{tab:mpc}、图~\ref{fig:mpc-track}、图~\ref{fig:mpc-err}。
+
+\begin{table}[t]
+\centering
+\caption{闭环与开环对照（同一实际扰动，全上升段 465.26\,s）}
+\label{tab:mpc}
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+指标 & 开环 & MPC 闭环\\
+\midrule
+位置跟踪 RMS（径向 + 地表弧长） & 59\,829\,m & \textbf{2.61\,m}\\
+速度跟踪 RMS（径向 + 切向） & 298.08\,m/s & \textbf{0.0992\,m/s}\\
+关机高度误差（相对目标圆轨道） & $-77\,611.6$\,m & \textbf{1.191\,m}\\
+关机径向速度 & $-557.98$\,m/s & \textbf{0.0231\,m/s}\\
+关机切向速度误差 & 233.26\,m/s & \textbf{0.0559\,m/s}\\
+最大偏角修正 & -- & $0.403^\circ$\\
+最大流率修正 & -- & $0.734$\,kg/s\\
+QP 调用 / 失败 & -- & 230 / 0\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.78\linewidth]{fig_mpc_tracking.pdf}
+\caption{高度、径向速度与切向速度的跟踪。浅灰粗线为参考，蓝色细线为 MPC 闭环，
+红色虚线为开环。闭环几乎与参考重合，开环在三幅图中都出现了可见的系统性偏离。}
+\label{fig:mpc-track}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.78\linewidth]{fig_mpc_error.pdf}
+\caption{跟踪误差（对称对数坐标，零附近为线性）。上：位置误差（径向与地表弧长合成）；下：速度误差。
+闭环误差始终在米级与 $10^{-1}$\,m/s 级，开环误差单调增长到 $10^{5}$\,m 与 $10^{2}$\,m/s。
+误差比例尺度差 5 个数量级，故采用对称对数坐标以便同时读出两条曲线。}
+\label{fig:mpc-err}
+\end{figure}
+
+三点解读。第一，闭环误差的量级（米级）与参考轨迹本身的数值精度（0.84\,m）相当，
+意味着\textbf{再减小 QP 权重或时域已无意义}，误差下限由模型与积分精度决定。
+第二，修正幅值极小：偏角最大只用了 $0.403^\circ$（上限 $5^\circ$），
+流率最大 $0.734$\,kg/s（上限 100\,kg/s），地面约束的松弛量最大 $6.4\times10^{-7}$，
+说明闭环工作在“小偏差线性化”的适用范围内，线性化假设自洽。
+第三，开环的发散不是“控制律不好”，而是\textbf{没有反馈时扰动被积分放大}：
+同样的随机加速度在 465\,s 内累积成 77.6\,km 的高度偏差。这正好量化了反馈的价值。
+
+\subsection{QP 求解时间}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.62\linewidth]{fig_qp.pdf}
+\caption{单次 QP 求解时间分布（230 次调用，对数横轴）。均值 1.77\,ms，
+中位数更低，最大 65.7\,ms 出现在个别约束组合较复杂的周期。}
+\label{fig:qp}
+\end{figure}
+
+230 次调用全部收敛（\texttt{exitflag}>0），平均 1.77\,ms、最大 65.7\,ms。
+相对 2\,s 的控制周期，平均耗时只占约 $0.09\%$。但这只是 MATLAB 桌面上的
+计时，不含离线线性化预计算（0.375\,s）与状态测量开销，
+\textbf{不能据此宣称满足嵌入式实时性要求}；它只能说明“在同等算力下，
+该 QP 的规模不构成瓶颈”。

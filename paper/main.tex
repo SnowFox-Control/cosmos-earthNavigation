@@ -1,0 +1,91 @@
+% !TeX program = xelatex
+\documentclass[UTF8,fontset=fandol,11pt,a4paper]{ctexart}
+
+% ------------------------------------------------------------------ 版式
+\usepackage{geometry}
+\geometry{left=2.6cm,right=2.6cm,top=2.7cm,bottom=2.7cm,headsep=0.6cm}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage[font=small,labelfont=bf,labelsep=quad]{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=blue!55!black,
+            urlcolor=blue!55!black]{hyperref}
+
+
+
+\linespread{1.18}
+\setlength{\emergencystretch}{2.5em}
+\setlength{\parskip}{0.25em}
+\setlist{itemsep=2pt,topsep=3pt,parsep=0pt}
+\graphicspath{{figures/}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small MATLAB个人大作业}
+\fancyhead[R]{\small 变推力变质量火箭的入轨规划与预测控制}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\bvec}[1]{\bm{#1}}
+\newcommand{\unit}[1]{\,\mathrm{#1}}
+
+% ------------------------------------------------------------------ 标题
+\title{\bfseries 变推力—变质量火箭的两段燃烧入轨规划\\[2pt]
+       与模型预测控制}
+\author{金承果}
+\date{2026 年 10 月}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+本文以“把一枚教学用运载火箭送入 600\,km 近圆轨道”为统一目标，建立了从物理建模、
+数值求解、轨迹优化到闭环控制的完整链路。模型采用地心二维极坐标下的变质量质点动力学，
+推力由常有效排气速度与可控推进剂流率给出，并计入指数大气模型的二次阻力与按密度缩放的
+高斯加速度扰动。控制量被参数化为“亚轨道燃烧—无推力滑行—圆轨化燃烧”两段燃烧方案的
+10 个设计变量，先用粒子群优化（PSO）在归一化空间中全局搜索，再用序列二次规划（SQP）
+把终端残差压到积分误差量级；规划阶段以 GPU 批量四阶 Runge--Kutta 积分筛选候选，以
+自适应 Dormand--Prince 方法复核。对已有可行参考，进一步设计了时变线性化、约束二次规划
+（QP）的模型预测控制（MPC），并与相同扰动下的开环前馈作对照。
+
+所得方案在 465.258\,s 关机，高度误差 0.265\,m、径向速度误差 $-0.021$\,m/s、切向速度
+误差 0.046\,m/s，瞬时密切轨道偏心率 $1.26\times10^{-5}$；关机后仅受引力与阻力推进一个
+轨道周期（5792.3\,s），高度保持在 599.998--600.174\,km。在另一独立扰动实现下，
+闭环位置跟踪均方根误差为 2.61\,m、速度误差 0.099\,m/s，而同一扰动下的开环对照分别达到
+59.8\,km 与 298\,m/s；230 次 QP 全部收敛，单次平均 1.77\,ms。文中同时给出精度自评：
+终端残差已低于积分步长误差，故只宜声称“米级”入轨精度；结论仅对应单次扰动试验与简化
+模型，不构成全局最优性、统计鲁棒性或严格闭环稳定性的证明。
+
+\vspace{0.6em}
+\noindent\textbf{关键词：}变质量动力学；齐奥尔科夫斯基方程；两段燃烧入轨；粒子群优化；
+序列二次规划；模型预测控制；二次规划
+\end{abstract}
+
+\vspace{-0.4em}
+\begin{center}\rule{0.86\linewidth}{0.4pt}\end{center}
+
+\input{sections/01_intro}
+\input{sections/02_model}
+\input{sections/03_numerics}
+\input{sections/04_planning}
+\input{sections/05_mpc}
+\input{sections/06_results}
+\input{sections/07_discussion}
+\input{sections/08_conclusion}
+
+\appendix
+\input{sections/appendix}
+
+\input{sections/refs}
+
+\end{document}
