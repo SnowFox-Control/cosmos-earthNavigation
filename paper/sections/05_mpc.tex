@@ -1,8 +1,8 @@
 \section{时变线性化模型预测控制}
 \subsection{参考与离散误差模型}
-从通过验收的纯PSO结果中选择复核目标最小者作为参考，不施加任何局部精修。参考包含$\bar x(t)=(r,\theta,u,w,m)^{\mathsf T}$和$\bar\delta(t),\bar q(t)$；预测窗口超出计划关机时刻后，参考继续按无推力、无随机外力的动力学延伸。
+为检验离线轨迹在新扰动下的执行性能，选取通过验收且复核目标最小的纯PSO结果作为MPC参考。参考状态为$\bar x(t)=(r,\theta,u,w,m)^{\mathsf T}$，参考输入为$\bar\delta(t),\bar q(t)$。当预测窗口超过计划关机时刻时，按无推力、无随机外力的同一动力学延伸参考，使预测末端与关机后的运动连续衔接。
 
-采样周期$T_s=2$\,s、预测步数$N=15$。本周期施加$\delta(t)=\bar\delta(t)+\Delta\delta_k$、$q(t)=\bar q(t)+\Delta q_k$，其中修正$c_k=(\Delta\delta_k,\Delta q_k)^{\mathsf T}$保持常数，参考前馈仍连续变化。以RK4积分名义方程得到离散映射$F_k(x,c)$，沿参考展开并归一化：
+控制器的采样周期为$T_s=2$\,s，预测步数为$N=15$。在每个控制周期内施加$\delta(t)=\bar\delta(t)+\Delta\delta_k$、$q(t)=\bar q(t)+\Delta q_k$。其中，反馈修正$c_k=(\Delta\delta_k,\Delta q_k)^{\mathsf T}$保持不变，参考前馈随时间连续变化。利用RK4积分构造名义离散映射$F_k(x,c)$，沿参考轨迹线性化并归一化，得到
 \begin{equation}e_{k+1}=A_ke_k+B_kv_k+d_k,\label{eq:ltv}\end{equation}
 \begin{equation}
 \begin{aligned}
@@ -11,7 +11,9 @@ A_k&=S_x^{-1}F_{x,k}S_x,&B_k&=S_x^{-1}F_{c,k}S_c,\\
 d_k&=S_x^{-1}[F_k(\bar x_k,0)-\bar x_{k+1}].
 \end{aligned}
 \end{equation}
-$F_{x,k},F_{c,k}$由离散映射中心差分获得。状态尺度为$(500\,\mathrm m,500\,\mathrm m/R_E,30\,\mathrm{m/s},30\,\mathrm{m/s},1000\,\mathrm{kg})$，输入尺度为$(2^\circ,50\,\mathrm{kg/s})$。$d_k$保留参考插值、积分和名义扰动环境差异，不能解释为未来实际噪声预测。名义预测不读取实际未来扰动。
+式中，$F_{x,k},F_{c,k}$通过名义离散映射的中心差分计算。
+
+状态尺度为$(500\,\mathrm m,500\,\mathrm m/R_E,30\,\mathrm{m/s},30\,\mathrm{m/s},1000\,\mathrm{kg})$，输入尺度为$(2^\circ,50\,\mathrm{kg/s})$。仿射项$d_k$保留参考插值、高精度轨迹与名义积分之间的偏差。预测模型将未来扰动取为零，因此该项不包含实际未来噪声信息。
 
 \subsection{代价凝聚与凸二次规划}
 未来状态及控制堆叠为$E,U$，则式\eqref{eq:ltv}递推得到
@@ -42,4 +44,4 @@ b=\begin{bmatrix}g+C_ra\\b_m+C_ma\end{bmatrix},\quad\epsilon\ge0.
 \end{equation}
 地面为软约束，干质量为硬约束；输入限制$|\delta|\le15^\circ$、$0\le q\le350$\,kg/s，修正幅度限制$|\Delta\delta|\le5^\circ$、$|\Delta q|\le100$\,kg/s。滑行及关机后不新增点火。当前QP含$2N+N=45$个变量，以凸内点法求解。
 
-每次仅执行第一项修正，下一周期更新状态后重算。起飞后首次反馈在6\,s施加。假设理想全状态测量，不包含传感器或执行机构动态；QP失败时退回参考前馈。该回退不构成一般安全性保证，局部QP凸性也不意味着原非线性控制问题具有全局最优性或递归可行性。
+QP求解后仅执行首项控制修正，下一采样时刻根据更新后的状态重新预测与优化。首次反馈在起飞后6\,s施加；若QP求解失败，则使用零反馈修正，继续执行参考前馈。仿真采用理想全状态测量，不包含传感器与执行机构动态。该设置用于评价局部预测反馈的作用，稳定性及可行性边界在讨论部分进一步说明。

@@ -1,19 +1,19 @@
 \section{变质量火箭的动力学模型}
 \subsection{理想推进关系与质量比下界}
-设质量为$m$，相对排气速度大小为$c$，排出质量为$-\mathrm dm>0$。微元动量平衡为
+设火箭瞬时质量为$m$，有效排气速度大小为$c$，时间微元内排出的质量为$-\mathrm dm>0$。由微元动量平衡可得
 \begin{equation}m\mathrm dv=-c\mathrm dm+F_{\rm ext}\mathrm dt.\end{equation}
-忽略外力且$c$恒定时，
+在忽略外力且$c$保持恒定的理想条件下，积分得到
 \begin{equation}\Delta v_{\rm ideal}=c\ln(m_0/m_f),\qquad I_T=\int_0^{t_f}T\dd t=c(m_0-m_f).\label{eq:tsiolkovsky}\end{equation}
-速度增量涉及$\int T/m\dd t$，不能以总冲量除以初始质量代替。
+式中总冲量反映推力的时间累积，而速度增量取决于质量变化过程中的$\int T/m\dd t$。因此，二者不能通过初始质量直接换算。
 
 目标半径$r_*=R_E+h_*$、圆轨道速度$v_c=\sqrt{\mu/r_*}$。对从$r_0$静止出发且$r\ge r_0$的确定性轨迹，令
 \begin{equation}\mathcal E=V^2/2+\mu(1/r_0-1/r).\end{equation}
 无随机外力且阻力耗能时，$\dot{\mathcal E}\le(T/m)V\le(T/m)\sqrt{2\mathcal E}$。积分并代入圆轨道末态得到
 \begin{equation}\frac{m_0}{m_f}\ge\exp\left[\frac1c\sqrt{\frac{2\mu}{r_0}-\frac{\mu}{r_*}}\right].\end{equation}
-算例中该界约为6.245，仅用于能力筛查；它不是充分可行条件，也不对任意高斯外力样本成立。
+对于本文算例，该必要质量比下界约为6.245，可用于轨迹搜索前的推进能力估算。由于推力方向、燃烧时序和外力损失仍影响实际运动，满足该下界并不足以保证入轨；其推导范围也不包含任意高斯外力样本。
 
 \subsection{二维极坐标运动方程}
-地球取不旋转球对称引力源，火箭取固定惯性平面内的变质量质点。忽略升力、分级与姿态执行机构动态。定义
+为描述上升与轨道注入过程，将地球视为不旋转的球对称引力源，将火箭视为固定惯性平面内的变质量质点，并忽略升力、分级和姿态执行机构动态。定义
 \begin{equation}h=r-R_E,\quad u=\dot r,\quad w=r\dot\theta,\quad V=\sqrt{u^2+w^2},\quad\beta=\operatorname{atan2}(w,u).\end{equation}
 控制为推力相对速度方向的偏角$\delta$及流率$q=-\dot m\ge0$，故$T=cq$、$\alpha=\beta+\delta$。起飞前5\,s保持$\alpha=0$，零速度附近采用方向保护。状态$x=(r,\theta,u,w,m,I_T)^{\mathsf T}$满足
 \begin{equation}
@@ -30,4 +30,4 @@
 \begin{equation}a_{\varepsilon,j}(t,h)=\sigma_{0,j}\frac{\rho(h)}{\rho_{\rm ref}}\eta_j(t),\quad j\in\{r,\theta\}.\label{eq:noise}\end{equation}
 在间隔1\,s的网格上生成独立标准高斯样本$\xi_{j,\ell}$，作方差归一化插值：
 \begin{equation}\eta_j(t)=\frac{(1-\lambda)\xi_{j,\ell}+\lambda\xi_{j,\ell+1}}{\sqrt{(1-\lambda)^2+\lambda^2}},\quad\lambda=t-\lfloor t\rfloor.\end{equation}
-该过程具有有限时间相关性和单位边缘方差，可作为固定样本路径上的ODE激励。它不是理想白噪声；归一化因子使插值后过程也不是严格分段线性。扰动标准差与密度成正比，方差与密度平方成正比。
+归一化插值使该过程在各时刻具有单位边缘方差，同时保留有限时间相关性。对给定样本路径，可将其作为ODE的外部激励进行积分。该模型区别于理想白噪声；由于归一化因子随时间变化，插值后的过程也不再严格分段线性。式\eqref{eq:noise}中与密度成正比的是扰动标准差，相应方差与密度平方成正比。
