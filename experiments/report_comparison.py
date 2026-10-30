@@ -121,14 +121,14 @@ macros.update(ClosedPos=f"{metrics['closedPositionRMS']:.3f}",OpenPos=f"{metrics
     QPCount=str(metrics['QPCalls']),QPFail=str(metrics['QPFailures']),
     QPMean=f"{metrics['meanQPSeconds']*1000:.3f}",QPMax=f"{metrics['maxQPSeconds']*1000:.1f}")
 (PAPER/'comparison_values.tex').write_text('\n'.join(r'\newcommand{\\'+k+'}{'+v+'}' for k,v in macros.items()).replace('{\\\\','{\\')+'\n',encoding='utf8')
-lines=[r'\begin{table}[htbp]\centering\small',r'\caption{等预算无精修比较（每种算法五次）。IQR为25\%--75\%区间，耗时不含编译与复核。}\label{tab:algorithm}',
+lines=[r'\begin{table}[H]\centering\small',r'\caption{等预算无精修比较（每种算法五次）。IQR为25\%--75\%区间，耗时不含编译与复核。}\label{tab:algorithm}',
     r'\begin{tabular}{lcccc}\toprule',r'算法 & 复核目标中位数 & IQR & 通过数 & 耗时中位数/s\\\midrule']
 for method in methods:
     s=summary[method]
     lines.append(f"{method} & {sci(s['median'])} & [{sci(s['q25'])}, {sci(s['q75'])}] & {s['passed']}/5 & {s['seconds']:.2f}"+r'\\')
 lines.extend([r'\bottomrule\end{tabular}\end{table}'])
 (PAPER/'comparison_table.tex').write_text('\n'.join(lines),encoding='utf8')
-lines=[r'\begin{table}[htbp]\centering\small',
+lines=[r'\begin{table}[H]\centering\small',
     r'\caption{纯PSO参考的开闭环对照。}\label{tab:mpc}',r'\begin{tabular}{lrr}\toprule',r'指标 & 开环 & MPC\\\midrule']
 data=[('位置跟踪RMS / m',metrics['openPositionRMS'],metrics['closedPositionRMS']),
       ('速度跟踪RMS / (m/s)',metrics['openVelocityRMS'],metrics['closedVelocityRMS']),

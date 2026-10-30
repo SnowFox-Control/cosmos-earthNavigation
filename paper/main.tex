@@ -2,11 +2,33 @@
 \documentclass[UTF8,fontset=fandol,11pt,a4paper]{ctexart}
 \usepackage[margin=2.4cm,headheight=15pt]{geometry}
 \usepackage{amsmath,amssymb,bm,mathtools,newtxtext,newtxmath}
-\usepackage{graphicx,booktabs,tabularx,array,placeins,microtype,fancyhdr}
+\usepackage{graphicx,booktabs,tabularx,array,placeins,float,needspace,microtype,fancyhdr}
 \usepackage[font=small,labelfont=bf,labelsep=quad]{caption}
 \usepackage{xurl}
 \usepackage[colorlinks=true,linkcolor=black,citecolor=black,urlcolor=black]{hyperref}
 \linespread{1.15}\setlength{\parskip}{.15em}\setlength{\emergencystretch}{2em}
+\ctexset{
+ section={beforeskip=1.6ex plus .3ex minus .2ex,afterskip=.9ex plus .2ex},
+ subsection={beforeskip=1.2ex plus .2ex,afterskip=.6ex plus .1ex}
+}
+\captionsetup{skip=5pt}
+% Permit several floats with text, avoiding half-empty float-only pages.
+\raggedbottom
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{5}
+\renewcommand{\topfraction}{.92}
+\renewcommand{\bottomfraction}{.85}
+\renewcommand{\textfraction}{.07}
+\renewcommand{\floatpagefraction}{.80}
+\setlength{\floatsep}{9pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\intextsep}{10pt plus 2pt minus 2pt}
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpsep}{12pt}
+\setlength{\@fpbot}{0pt plus 1fil}
+\makeatother
 \graphicspath{{figures/}}\pagestyle{fancy}\fancyhf{}
 \fancyhead[L]{\small 变质量火箭的轨道规划与预测控制}
 \fancyhead[R]{\small 启发式优化对比研究}\fancyfoot[C]{\thepage}
@@ -27,8 +49,10 @@
 \input{sections/04_planning}
 \input{sections/05_mpc}
 \input{sections/06_results}
+\FloatBarrier
 \input{sections/07_discussion}
 \input{sections/08_conclusion}
+\input{sections/data_availability}
 \appendix\input{sections/appendix}
 \FloatBarrier
 {\small\raggedright\linespread{1.0}\selectfont\input{sections/refs}}

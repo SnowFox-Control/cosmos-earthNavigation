@@ -6,12 +6,12 @@
 本组实验比较三种算法在相同计算预算下获得可行入轨轨迹的能力。每种算法执行五次配对运行，每次使用17376次搜索评价，最终两次独立ODE复核作为统一的额外验收开销。表\ref{tab:algorithm}汇总高精度复核统计，图\ref{fig:algorithm}给出随评价次数变化的搜索目标中位数、四分位区间及全部最终复核值。
 \input{comparison_table.tex}
 \begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth]{fig_planner_comparison.pdf}
+\includegraphics[width=.95\linewidth]{fig_planner_comparison.pdf}
 \caption{等预算搜索与复核。左：搜索目标中位数及25\%--75\%区间；右：五个配对种子的高精度复核目标。搜索曲线与右图使用不同精度评价，不应直接等同。}\label{fig:algorithm}
 \end{figure}
 在当前预算与配置下，PSO的五次运行均通过高精度验收，而GA与SA的通过数均为0/5。表\ref{tab:algorithm}中，PSO的复核目标中位数低于GA和SA，说明其在本组实验中获得了更小的终端综合误差。图\ref{fig:residual}进一步显示，GA与SA虽然降低了目标值，但部分速度残差仍超过10\,m/s，成为未通过验收的主要原因。这表明归一化平方和与逐分量可行性应结合评价；单一目标值不能替代终端条件检查。
 \begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth]{fig_planner_residuals.pdf}
+\includegraphics[width=.95\linewidth]{fig_planner_residuals.pdf}
 \caption{最终候选的高精度复核残差。每点对应一次运行；虚线为高度500\,m和两速度10\,m/s验收界限。}\label{fig:residual}
 \end{figure}
 
@@ -20,7 +20,7 @@
 
 选作MPC参考的PSO种子为\ReferenceSeed，关机时刻\ReferenceTime\,s，推进剂消耗\ReferenceFuel\,kg，高度、径向及切向速度残差分别为\ReferenceHeight\,m、\ReferenceRadial\,m/s和\ReferenceTangential\,m/s。其两段燃烧、滑行及状态演化见图\ref{fig:reference}。
 \begin{figure}[htbp]\centering
-\includegraphics[width=.95\linewidth]{fig_pure_reference.pdf}
+\includegraphics[width=.88\linewidth]{fig_pure_reference.pdf}
 \caption{无局部精修的PSO参考：平面轨迹、高度、流率与速度时间历程。高度到达目标与速度完成圆轨化为不同要求。}\label{fig:reference}
 \end{figure}
 图\ref{fig:reference}展示了两段燃烧方案的阶段特征：第一段建立上升运动并积累横向速度，滑行段继续抬升高度，第二段则调节径向与切向速度以接近圆轨道条件。参考控制直接取自PSO返回参数，复核仅重新计算其动力学响应。
@@ -34,7 +34,7 @@ E_v=\sqrt{\frac1M\sum_{j=1}^M[(u_j-\bar u_j)^2+(w_j-\bar w_j)^2]} .
 其中，$E_p$合成径向误差与地表弧长误差，用于衡量沿参考轨迹的空间偏差。表\ref{tab:mpc}分别报告相对参考的跟踪RMS和相对目标圆轨道的关机误差，以区分轨迹执行精度与轨道注入精度。
 \input{mpc_table.tex}
 \begin{figure}[htbp]\centering
-\includegraphics[width=\linewidth]{fig_pure_mpc.pdf}
+\includegraphics[width=.90\linewidth]{fig_pure_mpc.pdf}
 \caption{相同实际扰动下的开环与MPC：平面轨迹、位置跟踪误差、速度跟踪误差及QP求解时间。对数误差图的零值显示下限仅用于绘图。}\label{fig:mpc}
 \end{figure}
 由表\ref{tab:mpc}与图\ref{fig:mpc}可见，MPC将位置跟踪RMS从开环的\OpenPos\,m降至\ClosedPos\,m，速度跟踪RMS从\OpenVel\,m/s降至\ClosedVel\,m/s。开环偏差随飞行过程积累，闭环则通过持续更新偏角与流率修正使轨迹保持在参考附近。该对照说明，性能改善来自状态反馈对执行偏差的补偿，而非初始状态或实际扰动条件的改变。参考轨迹自身仍具有非零入轨残差，因此较小的跟踪误差不意味着相对于目标轨道的误差同样为零。
