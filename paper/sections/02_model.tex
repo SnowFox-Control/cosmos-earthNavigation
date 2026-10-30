@@ -1,173 +1,33 @@
-\section{数学物理模型}
-\label{sec:model}
+\section{变质量火箭的动力学模型}
+\subsection{理想推进关系与质量比下界}
+设质量为$m$，相对排气速度大小为$c$，排出质量为$-\mathrm dm>0$。微元动量平衡为
+\begin{equation}m\mathrm dv=-c\mathrm dm+F_{\rm ext}\mathrm dt.\end{equation}
+忽略外力且$c$恒定时，
+\begin{equation}\Delta v_{\rm ideal}=c\ln(m_0/m_f),\qquad I_T=\int_0^{t_f}T\dd t=c(m_0-m_f).\label{eq:tsiolkovsky}\end{equation}
+速度增量涉及$\int T/m\dd t$，不能以总冲量除以初始质量代替。
 
-\subsection{基本假设}
+目标半径$r_*=R_E+h_*$、圆轨道速度$v_c=\sqrt{\mu/r_*}$。对从$r_0$静止出发且$r\ge r_0$的确定性轨迹，令
+\begin{equation}\mathcal E=V^2/2+\mu(1/r_0-1/r).\end{equation}
+无随机外力且阻力耗能时，$\dot{\mathcal E}\le(T/m)V\le(T/m)\sqrt{2\mathcal E}$。积分并代入圆轨道末态得到
+\begin{equation}\frac{m_0}{m_f}\ge\exp\left[\frac1c\sqrt{\frac{2\mu}{r_0}-\frac{\mu}{r_*}}\right].\end{equation}
+算例中该界约为6.245，仅用于能力筛查；它不是充分可行条件，也不对任意高斯外力样本成立。
 
-把火箭视为质量随时间变化的质点，采用以下假设：
-
-\begin{enumerate}[label=(\arabic*)]
-\item 运动限制在通过地心的固定惯性平面内，不求解姿态、角速度与摆动机构动力学；
-      推力方向直接作为控制量。
-\item 地球为球对称引力源，忽略自转（因而不计离心力与科氏力）、$J_2$ 摄动、日月引力。
-\item 空气静止，忽略风与升力；阻力与速度平方成正比，方向与速度相反。
-\item 大气密度随高度按指数规律衰减，阻力系数 $C_D$ 与迎风面积 $A$ 取常数。
-\item 有效排气速度 $c$ 恒定，推进剂流率 $q\ge 0$ 可调；允许发动机关机后再次点火，
-      但不建模点火损耗、推进剂沉底与残余不可用量。
-\item 不建模分级、结构质量变化、热载荷与动压限制。
-\end{enumerate}
-
-这些假设使模型成为“平面变质量质点 + 经验大气”的教学模型，其数值结论不能等同于
-真实运载火箭的弹道设计，但足以支撑优化与控制方法的研究。
-
-\subsection{坐标、状态与几何量}
-
-以地心为极点，取惯性平面内固定方向为零角。记极坐标 $(r,\theta)$，定义高度、径向速度
-与切向速度
+\subsection{二维极坐标运动方程}
+地球取不旋转球对称引力源，火箭取固定惯性平面内的变质量质点。忽略升力、分级与姿态执行机构动态。定义
+\begin{equation}h=r-R_E,\quad u=\dot r,\quad w=r\dot\theta,\quad V=\sqrt{u^2+w^2},\quad\beta=\operatorname{atan2}(w,u).\end{equation}
+控制为推力相对速度方向的偏角$\delta$及流率$q=-\dot m\ge0$，故$T=cq$、$\alpha=\beta+\delta$。起飞前5\,s保持$\alpha=0$，零速度附近采用方向保护。状态$x=(r,\theta,u,w,m,I_T)^{\mathsf T}$满足
 \begin{equation}
-h=r-R_E,\qquad u=\dot r,\qquad w=r\dot\theta,\qquad V=\sqrt{u^2+w^2}.
-\label{eq:kinematics}
+\begin{aligned}
+\dot r&=u,&\dot\theta&=w/r,\\
+\dot u&=\frac{w^2}{r}+\frac{cq\cos\alpha}{m}-\frac{\mu}{r^2}-\frac{kVu}{m}+a_{\varepsilon,r},\\
+\dot w&=-\frac{uw}{r}+\frac{cq\sin\alpha}{m}-\frac{kVw}{m}+a_{\varepsilon,\theta},\\
+\dot m&=-q,&\dot I_T&=cq .
+\end{aligned}\label{eq:dynamics}
 \end{equation}
-状态向量取
-\begin{equation}
-\bvec x=[\,r,\ \theta,\ u,\ w,\ m,\ I\,]^{\mathsf T},
-\label{eq:state}
-\end{equation}
-其中 $m$ 为瞬时质量，$I=\int T\dd t$ 为发动机标量总冲量。$I$ 不参与受力，仅用于累计
-冲量与交叉校验，故跟踪与控制时取前五个分量。
+其中$\rho(h)=\rho_0e^{-\max(h,0)/H_a}$、$k=\rho C_DA_f/2$。阻力矢量为$-kV(u\bm e_r+w\bm e_\theta)$，大小为$kV^2$，在静止大气假设下与惯性速度反向。$w^2/r$与$-uw/r$为坐标运动学项，不是附加外力。优化允许主动偏角，不将全程视为严格零偏角重力转弯。
 
-推力方向用两个角描述。设速度方向相对径向向外单位的夹角为
-\begin{equation}
-\beta=\arctan\!\frac{w}{u},\qquad \beta=0\ \text{当}\ V<10^{-9}\ \mathrm{m/s},
-\end{equation}
-推力相对径向向外的夹角为 $\alpha=\beta+\delta$，于是 $\delta$ 就是\textbf{推力相对速度
-方向的偏角}，正号表示朝切向（顺航向）偏转。飞行路径角相对当地水平为
-$\gamma=\arctan(u/w)$，注意 $\gamma=\pi/2-\beta$（在第一象限内），两者互为余角。
-起飞后的 $t_{\mathrm{turn}}=5\,\mathrm{s}$ 内强制 $\alpha=0$（竖直推力），以避免零速度
-附近方向未定义带来的奇异。
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.95\linewidth]{fig_model.pdf}
-\caption{几何与角度定义。(a) 地心惯性极坐标：$r$ 为地心距，$\theta$ 为极角，点划线为
-600\,km 目标圆轨道；(b) 箭体当地系：$\hat e_r$ 指向径向向外，$\hat e_\theta$ 指向切向，
-$\beta$ 为速度相对径向的夹角，$\alpha=\beta+\delta$ 为推力相对径向的夹角，$\delta$ 即
-控制量。(b) 为示意角度，不按真实比例。}
-\label{fig:model}
-\end{figure}
-
-\subsection{变质量推进与齐奥尔科夫斯基方程}
-
-设发动机在 $\dd t$ 内喷出质量 $-\dd m>0$，排气相对箭体的速度为 $c$。对“箭体 + 已喷出
-质量”这一系统在无外力方向列动量守恒，忽略二阶小量得
-\begin{equation}
-m\,\dd v=-c\,\dd m .
-\label{eq:tsiolkovsky-diff}
-\end{equation}
-在外力为零、$c$ 恒定时积分，得到齐奥尔科夫斯基方程
-\begin{equation}
-\Delta v_{\mathrm{ideal}}=c\ln\frac{m_0}{m_f}.
-\label{eq:tsiolkovsky}
-\end{equation}
-式~\eqref{eq:tsiolkovsky-diff} 也是本文数值模型的出发点：它说明推力对速度的贡献来自
-质量流的反作用，而非额外的“力源”。在模型中取
-\begin{equation}
-T=c\,q,\qquad \dot m=-q,\qquad 0\le q\le q_{\max}=350\,\mathrm{kg/s}.
-\label{eq:thrust}
-\end{equation}
-总冲量因此满足 $I_T=\int T\dd t=c\,(m_0-m_f)$，与式~\eqref{eq:tsiolkovsky} 自洽。
-
-\subsection{极坐标运动方程}
-
-在地心极坐标下，径向与切向的加速度由“离心项、推力项、引力项、阻力项、扰动项”叠加：
-
-\begin{align}
-\dot r &= u, \label{eq:eom1}\\
-\dot\theta &= \frac{w}{r}, \label{eq:eom2}\\
-\dot u &= \frac{w^2}{r}+\frac{T\cos\alpha}{m}-\frac{\mu}{r^2}
-          -\frac{k V u}{m}+a_{\varepsilon,r}, \label{eq:eom3}\\
-\dot w &= -\frac{u w}{r}+\frac{T\sin\alpha}{m}
-          -\frac{k V w}{m}+a_{\varepsilon,\theta}, \label{eq:eom4}\\
-\dot m &= -q, \label{eq:eom5}\\
-\dot I &= T, \label{eq:eom6}
-\end{align}
-其中 $\mu=3.986004418\times10^{14}\,\mathrm{m^3/s^2}$，
-\begin{equation}
-k=\tfrac12\rho(h)\,C_D A,\qquad
-\rho(h)=\rho_0\exp\!\left(-\frac{\max(h,0)}{H}\right),
-\label{eq:atmosphere}
-\end{equation}
-$\rho_0=1.225\,\mathrm{kg/m^3}$，标高 $H=8500\,\mathrm{m}$，$C_D A=0.35\times2.0\,
-\mathrm{m^2}$。阻力项写成 $k V u/m$ 与 $k V w/m$，等价于矢量形式
-$-k V\bvec v/m$，因此阻力始终与速度反向、只做负功。
-
-式~\eqref{eq:eom3}--\eqref{eq:eom4} 中的 $\alpha$ 同时依赖状态（通过 $\beta$）与控制
-（通过 $\delta$），这是“推力沿速度方向附近偏转”这一物理约束的体现。若令 $\delta=0$，
-推力始终沿速度方向，轨迹在重力作用下自然弯曲，即通常所说的重力转弯。
-
-\subsection{控制参数化与过渡段}
-
-连续控制 $(\delta(t),q(t))$ 用有限个节点上的值线性插值得到：
-\begin{equation}
-\delta(t)=\mathrm{interp}\big(\{(t_i,\delta_i)\}\big),\qquad
-q(t)=\mathrm{interp}\big(\{(t_i,q_i)\}\big),
-\label{eq:control-interp}
-\end{equation}
-节点之外保持端点值。两段燃烧方案共 11 个节点，发动机启停用 $\Delta t_{\mathrm{ramp}}
-=0.5\,\mathrm{s}$ 的线性过渡（见 \S\ref{sec:planning}）。这一处理避免了流率的阶跃，
-使 ODE 右端项连续，便于自适应积分器工作；同时也要承认，0.5\,s 只是教学取法，
-真实发动机的启动与关机过程更复杂。
-
-\subsection{参数取值}
-
-表~\ref{tab:params} 汇总了本文使用的物理参数，其中比冲与排气速度按
-$I_{\mathrm{sp}}=c/g_0$ 换算\cite{sutton2016}。初始质量 60\,t、推进剂占比 0.98、
-干质量 1.2\,t 的设定使总质量比达到 50，远超真实单级火箭的水平，这是为了让
-“$c=4500\,\mathrm{m/s}$ 的单级火箭也能完成入轨”这一教学算例成立而做的取舍。
-
-\begin{table}[t]
-\centering
-\caption{物理与几何参数（SI 单位）}
-\label{tab:params}
-\small
-\begin{tabular}{@{}llrl@{}}
-\toprule
-符号 & 含义 & 取值 & 单位\\
-\midrule
-$R_E$ & 地球半径 & 6\,371\,000 & m\\
-$\mu$ & 地球引力参数 & $3.986004418\times10^{14}$ & m$^3$/s$^2$\\
-$\rho_0$ & 海平面大气密度 & 1.225 & kg/m$^3$\\
-$H$ & 大气标高 & 8\,500 & m\\
-$C_D$ & 阻力系数 & 0.35 & --\\
-$A$ & 迎风面积 & 2.0 & m$^2$\\
-$m_0$ & 起飞质量 & 60\,000 & kg\\
-$m_{\mathrm{dry}}$ & 干质量 & 1\,200 & kg\\
-$c$ & 有效排气速度 & 4\,500 & m/s\\
-$I_{\mathrm{sp}}$ & 比冲（$c/g_0$） & 458.87 & s\\
-$q_{\max}$ & 流率上限 & 350 & kg/s\\
-$\delta_{\max}$ & 偏角幅值上限 & 15 & $^\circ$\\
-$t_{\mathrm{turn}}$ & 起飞竖直保持时间 & 5 & s\\
-$h_*$ & 目标高度 & 600\,000 & m\\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{理想能力边界}
-
-在给出数值结果之前，先看一个不依赖优化的必要条件：由静止出发、仅受引力与推力、
-要求终端半径 $r_*=R_E+h_*$ 且径向速度为零，则最小速度增量对应从 $R_E$ 到 $r_*$ 的
-能量差，
-\begin{equation}
-\Delta v_{\min}=\sqrt{\frac{2\mu}{R_E}-\frac{\mu}{r_*}},
-\qquad
-\frac{m_0}{m_f}\ \ge\ \exp\!\left(\frac{\Delta v_{\min}}{c}\right).
-\label{eq:mass-bound}
-\end{equation}
-代入数值：$\Delta v_{\min}=8243.2\,\mathrm{m/s}$，下界为 $e^{1.8318}=6.245$。
-而本文方案的实际质量比为 $m_0/m_f=60\,000/7309.71=8.208$，说明：
-\textbf{理想下界是必要的而非充分的}——它没有计入重力损失、阻力损失与转向损失，
-实际所需质量比必然更大；满足下界只意味着“理论上还有可能”，不意味着“一定能入轨”。
-
-对本文参数，理想方程给出的最大速度增量为
-$c\ln 50=17\,604\,\mathrm{m/s}$；即便为重力与阻力损失预留 1--2\,km/s，
-在 $7561.7\,\mathrm{m/s}$ 的入轨速度之上仍有可观余量，因此本算例的瓶颈不在推进能力，
-而在\textbf{如何把速度增量用在正确的高度与方向上}。这正是需要轨迹优化的原因。
+\subsection{密度相关随机激励}
+\begin{equation}a_{\varepsilon,j}(t,h)=\sigma_{0,j}\frac{\rho(h)}{\rho_{\rm ref}}\eta_j(t),\quad j\in\{r,\theta\}.\label{eq:noise}\end{equation}
+在间隔1\,s的网格上生成独立标准高斯样本$\xi_{j,\ell}$，作方差归一化插值：
+\begin{equation}\eta_j(t)=\frac{(1-\lambda)\xi_{j,\ell}+\lambda\xi_{j,\ell+1}}{\sqrt{(1-\lambda)^2+\lambda^2}},\quad\lambda=t-\lfloor t\rfloor.\end{equation}
+该过程具有有限时间相关性和单位边缘方差，可作为固定样本路径上的ODE激励。它不是理想白噪声；归一化因子使插值后过程也不是严格分段线性。扰动标准差与密度成正比，方差与密度平方成正比。

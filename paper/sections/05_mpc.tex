@@ -1,106 +1,45 @@
-\section{基于凸二次规划的模型预测控制}
-\label{sec:mpc}
+\section{时变线性化模型预测控制}
+\subsection{参考与离散误差模型}
+从通过验收的纯PSO结果中选择复核目标最小者作为参考，不施加任何局部精修。参考包含$\bar x(t)=(r,\theta,u,w,m)^{\mathsf T}$和$\bar\delta(t),\bar q(t)$；预测窗口超出计划关机时刻后，参考继续按无推力、无随机外力的动力学延伸。
 
-规划给出的是开环最优控制。真实飞行中，扰动实现与规划时不同，任何微小的状态偏差
-都会被上升段放大。本节设计一个线性时变（LTV）的约束 MPC\cite{mayne2000mpc}，
-它以规划轨迹为参考，在每个控制周期求解一个小规模凸 QP，只执行首个修正，
-下一周期重新测量、重新求解。
-
-\subsection{参考轨迹与向前延伸}
-
-参考由保存的成功规划结果给出：状态 $\bvec x^{\mathrm{ref}}(t)$ 与控制
-$(\delta^{\mathrm{ref}},q^{\mathrm{ref}})$ 都从离散的仿真时间序列插值得到。
-预测时域为 $N=15$ 步、步长 $T_s=2\,\mathrm{s}$，即前瞻 30\,s；当预测窗口越过
-规划关机时刻时，参考不能冻结，而应继续按\textbf{无推力、无扰动的同一动力学}外推。
-否则控制器会看到“参考突然停在 600\,km”，从而错误地持续加速。
-
-\subsection{误差归一化}
-
-五个跟踪状态为 $\bvec x=[r,\theta,u,w,m]^{\mathsf T}$（冲量 $I$ 与质量有确定关系，
-不作为独立状态）。直接相减会因量纲混杂而病态：$r$ 的量级是 $10^6$\,m，$\theta$ 是
-$10^0$\,rad。采用
+采样周期$T_s=2$\,s、预测步数$N=15$。本周期施加$\delta(t)=\bar\delta(t)+\Delta\delta_k$、$q(t)=\bar q(t)+\Delta q_k$，其中修正$c_k=(\Delta\delta_k,\Delta q_k)^{\mathsf T}$保持常数，参考前馈仍连续变化。以RK4积分名义方程得到离散映射$F_k(x,c)$，沿参考展开并归一化：
+\begin{equation}e_{k+1}=A_ke_k+B_kv_k+d_k,\label{eq:ltv}\end{equation}
 \begin{equation}
-\tilde{\bvec e}=\mathrm{diag}\!\left(s_r,\ \frac{s_\theta}{R_E},\ s_u,\ s_w,\ s_m\right)^{-1}
-\big(\bvec x-\bvec x^{\mathrm{ref}}\big),
-\qquad
-\bvec s=[500\,\mathrm{m},\,500\,\mathrm{m},\,30\,\mathrm{m/s},\,30\,\mathrm{m/s},\,1000\,\mathrm{kg}],
-\label{eq:normalize}
+\begin{aligned}
+e_k&=S_x^{-1}(x_k-\bar x_k),&v_k&=S_c^{-1}c_k,\\
+A_k&=S_x^{-1}F_{x,k}S_x,&B_k&=S_x^{-1}F_{c,k}S_c,\\
+d_k&=S_x^{-1}[F_k(\bar x_k,0)-\bar x_{k+1}].
+\end{aligned}
 \end{equation}
-其中极角误差先乘以 $R_E$ 变成地表弧长，再与径向误差共用 500\,m 的尺度。
-这样“沿航迹偏 1\,km”与“高 1\,km”在代价中权重相同，符合轨道跟踪的几何直觉。
+$F_{x,k},F_{c,k}$由离散映射中心差分获得。状态尺度为$(500\,\mathrm m,500\,\mathrm m/R_E,30\,\mathrm{m/s},30\,\mathrm{m/s},1000\,\mathrm{kg})$，输入尺度为$(2^\circ,50\,\mathrm{kg/s})$。$d_k$保留参考插值、积分和名义扰动环境差异，不能解释为未来实际噪声预测。名义预测不读取实际未来扰动。
 
-\subsection{时变线性化}
-
-在参考轨迹的第 $k$ 个采样点附近，把离散映射 $\bvec x_{k+1}=\bvec F_k(\bvec x_k,
-\bvec u_k)$ 线性化：
+\subsection{代价凝聚与凸二次规划}
+未来状态及控制堆叠为$E,U$，则式\eqref{eq:ltv}递推得到
+\begin{equation}E=\mathcal A e_k+\mathcal B U+\mathcal D=a+\mathcal B U.\end{equation}
+取有限时域目标
 \begin{equation}
-\tilde{\bvec e}_{k+1}=A_k\tilde{\bvec e}_k+B_k\bvec\nu_k+\bvec d_k,
-\label{eq:ltv}
+\begin{aligned}
+J_{\rm MPC}={}&E^{\mathsf T}\bar Q E+U^{\mathsf T}\bar R U\\
+&+(DU-b_\Delta)^{\mathsf T}\bar R_\Delta(DU-b_\Delta)
++\lambda_\epsilon\epsilon^{\mathsf T}\epsilon .
+\end{aligned}
 \end{equation}
-其中 $\bvec\nu=[\Delta\delta/(2^\circ),\ \Delta q/(50\,\mathrm{kg/s})]^{\mathsf T}$
-是归一化修正量，$A_k$、$B_k$ 由四阶 Runge--Kutta 离散映射的\textbf{中心差分}得到
-（每步内部再分 4 个子步，以匹配 $T_s$ 内的真实演化），
-$\bvec d_k$ 是仿射项，用来吸收“参考插值”与“名义离散模型”之间的差异。
-保留 $\bvec d_k$ 很关键：它使 $\bvec e=0,\ \bvec\nu=0$ 时预测轨迹仍能贴合参考，
-否则控制器会在无偏差时凭空产生修正量。
+$D$为控制差分矩阵，$b_\Delta$第一块为上步已执行修正。状态权重$Q=\operatorname{diag}(4,2,4,4,0.1)$，末步权重为$5Q$，$R=0.2I_2$，$R_\Delta=0.5I_2$，$\lambda_\epsilon=10^5$。惩罚的是反馈修正变化，不是总控制的硬性变化率限制。
 
-这是\textbf{沿单一参考的线性时变近似}，不是逐时刻求解非线性最优控制的 NMPC。
-其有效性依赖于参考与实际的偏差足够小；本问题中闭环偏差在米级，而状态量级在
-$10^6$\,m，相对偏差 $10^{-6}$，线性化假设成立。
-
-\subsection{预测方程与代价}
-
-把式~\eqref{eq:ltv} 沿时域展开，得到
+令$\zeta=(U^{\mathsf T},\epsilon^{\mathsf T})^{\mathsf T}$，消去状态并去除常数项，得到
+\begin{equation}\min_\zeta\tfrac12\zeta^{\mathsf T}H\zeta+f^{\mathsf T}\zeta,\quad G\zeta\le b,\quad l\le\zeta\le u,\end{equation}
+其中
 \begin{equation}
-\tilde{\bvec E}=\mathcal{A}\,\tilde{\bvec e}_k+\mathcal{B}\,\bvec U+\mathcal{D},
-\qquad
-\bvec U=[\bvec\nu_k;\bvec\nu_{k+1};\dots;\bvec\nu_{k+N-1}]\in\mathbb{R}^{2N},
+\begin{aligned}
+H&=\operatorname{blkdiag}\left(2[\mathcal B^{\mathsf T}\bar Q\mathcal B+\bar R+D^{\mathsf T}\bar R_\Delta D],2\lambda_\epsilon I_N\right),\\
+f&=\begin{bmatrix}2(\mathcal B^{\mathsf T}\bar Q a-D^{\mathsf T}\bar R_\Delta b_\Delta)\\0\end{bmatrix}.
+\end{aligned}
 \end{equation}
-其中 $\tilde{\bvec E}$ 是未来 $N$ 步误差的堆叠。优化目标为
+因$\bar R\succ0$、$\bar Q,\bar R_\Delta\succeq0$，目标严格凸\cite{boyd2004}。状态选择矩阵$C_r,C_m$分别提取径向及质量误差；参考高度和燃料余量归一化为$g,b_m$后，
 \begin{equation}
-J_{\mathrm{MPC}}=\sum_{j=1}^{N}\tilde{\bvec e}_{k+j}^{\mathsf T}Q_j\tilde{\bvec e}_{k+j}
-+\sum_{j=0}^{N-1}\bvec\nu_{k+j}^{\mathsf T}R\,\bvec\nu_{k+j}
-+\sum_{j=0}^{N-1}\Delta\bvec\nu_{k+j}^{\mathsf T}R_\Delta\Delta\bvec\nu_{k+j}
-+\lambda\sum_{j=1}^{N}\epsilon_j^{2},
-\label{eq:mpc-cost}
+G=\begin{bmatrix}-C_r\mathcal B&-I_N\\-C_m\mathcal B&0\end{bmatrix},\quad
+b=\begin{bmatrix}g+C_ra\\b_m+C_ma\end{bmatrix},\quad\epsilon\ge0.
 \end{equation}
-默认 $Q=\mathrm{diag}(4,2,4,4,0.1)$、终端权重放大 5 倍、$R=0.2I_2$、
-$R_\Delta=0.5I_2$、松弛权重 $\lambda=10^{5}$。前两项惩罚“偏离参考”，
-第三项惩罚“修正量抖动”（抑制执行机构的频繁往复），最后一项为地面约束的软松弛。
+地面为软约束，干质量为硬约束；输入限制$|\delta|\le15^\circ$、$0\le q\le350$\,kg/s，修正幅度限制$|\Delta\delta|\le5^\circ$、$|\Delta q|\le100$\,kg/s。滑行及关机后不新增点火。当前QP含$2N+N=45$个变量，以凸内点法求解。
 
-\subsection{约束}
-
-约束分为三类。\textbf{物理边界}：
-\begin{equation}
-|\delta^{\mathrm{ref}}+\Delta\delta|\le 10^\circ,\qquad
-0\le q^{\mathrm{ref}}+\Delta q\le 350\,\mathrm{kg/s};
-\end{equation}
-\textbf{修正幅值}：
-\begin{equation}
-|\Delta\delta|\le 5^\circ,\qquad |\Delta q|\le 100\,\mathrm{kg/s};
-\end{equation}
-\textbf{状态约束}：质量不得低于干质量（硬约束），高度不得低于地面（软约束，带松弛
-$\epsilon_j\ge0$）。此外，为不破坏规划好的燃烧时序，滑行段不允许新增推力，
-即 $q^{\mathrm{ref}}=0$ 的时段内限制 $\Delta q\le0$。
-
-把式~\eqref{eq:mpc-cost} 代入预测方程并对 $\bvec U$ 消元，得到一个标准凸二次规划
-\begin{equation}
-\min_{\bvec U,\ \bvec\epsilon}\ \tfrac12\,\bvec U^{\mathsf T}H\bvec U+\bvec f^{\mathsf T}\bvec U
-\quad\text{s.t.}\quad G\bvec U\le\bvec b,
-\label{eq:qp}
-\end{equation}
-其中 $H=\mathcal{B}^{\mathsf T}\bar{Q}\mathcal{B}+\bar{R}+\mathcal{D}_\Delta^{\mathsf T}
-\bar{R}_\Delta\mathcal{D}_\Delta$ 对称正定（因 $\bar R\succ0$），故问题是严格凸的，
-局部最优即全局最优\cite{boyd2004}。用 \texttt{quadprog}\cite{mathworks2025} 的
-内点法求解，不依赖 MPC 工具箱。
-
-\subsection{滚动执行}
-
-控制周期为 2\,s，仿真总时长 577.31\,s，共 289 个区间。起飞后前 5\,s 保持竖直推力、
-不施加反馈，首个生效控制点为 $t=6\,\mathrm{s}$。每个周期：测量状态、求 QP、
-取 $\bvec\nu_k$ 转成物理量、用\textbf{含扰动}的实际对象推进一个周期、进入下一周期。
-全部计算在 MATLAB 桌面完成，单次 QP 的耗时分布见 \S\ref{sec:results}。
-
-需要强调，测量是\textbf{理想全状态反馈}：没有传感器噪声、状态估计、通信延迟与
-执行机构动力学。因此本文报告的闭环性能是“给定模型与给定扰动下的最好情况”，
-不能直接外推为真实飞行的精度或实时性结论。
+每次仅执行第一项修正，下一周期更新状态后重算。起飞后首次反馈在6\,s施加。假设理想全状态测量，不包含传感器或执行机构动态；QP失败时退回参考前馈。该回退不构成一般安全性保证，局部QP凸性也不意味着原非线性控制问题具有全局最优性或递归可行性。

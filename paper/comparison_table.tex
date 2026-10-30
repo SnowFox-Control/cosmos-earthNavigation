@@ -1,0 +1,8 @@
+\begin{table}[htbp]\centering\small
+\caption{等预算无精修比较（每种算法五次）。IQR为25\%--75\%区间，耗时不含编译与复核。}\label{tab:algorithm}
+\begin{tabular}{lcccc}\toprule
+算法 & 复核目标中位数 & IQR & 通过数 & 耗时中位数/s\\\midrule
+PSO & \ensuremath{1.75\times10^{-6}} & [\ensuremath{1.22\times10^{-6}}, \ensuremath{2.32\times10^{-6}}] & 5/5 & 3.24\\
+GA & \ensuremath{2.29\times10^{-4}} & [\ensuremath{1.90\times10^{-4}}, \ensuremath{5.49\times10^{-4}}] & 0/5 & 3.24\\
+SA & \ensuremath{5.22\times10^{-3}} & [\ensuremath{2.70\times10^{-4}}, \ensuremath{9.26\times10^{-3}}] & 0/5 & 2.46\\
+\bottomrule\end{tabular}\end{table}

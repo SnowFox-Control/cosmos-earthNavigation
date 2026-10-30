@@ -1,0 +1,92 @@
+{
+  "algorithms": {
+    "PSO": {
+      "median": 1.749174211153772e-06,
+      "q25": 1.215363054443138e-06,
+      "q75": 2.3167297706919344e-06,
+      "passed": 5,
+      "seconds": 3.2365787999988243,
+      "medianAbsResidual": [
+        13.179380068555474,
+        0.10149123669677254,
+        0.043739571478909056
+      ]
+    },
+    "GA": {
+      "median": 0.00022949476972704985,
+      "q25": 0.00019026851732659766,
+      "q75": 0.0005489526868318958,
+      "passed": 0,
+      "seconds": 3.2402025000010326,
+      "medianAbsResidual": [
+        62.55997347831726,
+        5.192771363809573,
+        12.451631562283183
+      ]
+    },
+    "SA": {
+      "median": 0.005217531493317333,
+      "q25": 0.00027006044321311305,
+      "q75": 0.009257961999971885,
+      "passed": 0,
+      "seconds": 2.4582130999988294,
+      "medianAbsResidual": [
+        88.2424157038331,
+        43.076615095594725,
+        13.588719085363664
+      ]
+    }
+  },
+  "referenceSeed": 161,
+  "metrics": {
+    "closedNormalizedRMS": 0.005124997095505163,
+    "openNormalizedRMS": 51.79534960880497,
+    "closedTerminalTracking": [
+      -0.032120050862431526,
+      -7.393901149677085e-08,
+      0.052180883813925286,
+      0.7167659767028454,
+      -0.8906679990795965
+    ],
+    "openTerminalTracking": [
+      -29840.841902911663,
+      0.006431384129578277,
+      -174.68421600915696,
+      101.7025047435045,
+      0.00021953039777145023
+    ],
+    "QPFailures": 0,
+    "QPCalls": 259,
+    "meanQPSeconds": 0.004554884942084943,
+    "maxQPSeconds": 0.589866,
+    "closedImpact": false,
+    "openImpact": false,
+    "closedPositionRMS": 1.9445854661665924,
+    "openPositionRMS": 25836.582367395476,
+    "closedVelocityRMS": 0.09758083242142905,
+    "openVelocityRMS": 106.66798324961293,
+    "closedOrbitResidual": [
+      -8.156883606687188,
+      0.0035799471357133277,
+      0.7455836859890042
+    ],
+    "openOrbitResidual": [
+      -29848.966666467488,
+      -174.73281694583517,
+      101.73132245279066
+    ]
+  },
+  "trials": 15,
+  "localRefinement": false,
+  "python": "3.13.12",
+  "numpy": "2.3.5",
+  "hashConvention": "Raw bytes for binary inputs; LF-normalized bytes for .m/.py sources",
+  "integrator": "double RK4, max step .05 s; MATLAB ode45 independent verification",
+  "hashes": {
+    "results\\comparison\\inputs.mat": "656b80c5e247eb46ad66cc49d57ef8089196e780bdc89cb7a66ca89001029631",
+    "experiments\\compare_planners.py": "66649799d8ed1f1fadc668637849ced464177958b95f6bdbdd5340b9c7592a12",
+    "experiments\\planner_cpu.py": "6e35e39f7cb7a840e85f97cd1ccabe874e6e39729b2b93671e48618465a5d3a7",
+    "model\\rocket_dynamics.m": "b9b2b2d8e9e9e570495579bbe26994400c5098593b2579d7575bb31ec0f1a9c6",
+    "experiments\\verify_comparison.m": "721936efe01e6753434621e12e297bb1ecd76100dd894392394665cae888afea"
+  }
+}

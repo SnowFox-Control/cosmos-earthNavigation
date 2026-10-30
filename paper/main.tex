@@ -1,84 +1,28 @@
 % !TeX program = xelatex
 \documentclass[UTF8,fontset=fandol,11pt,a4paper]{ctexart}
-
-% ------------------------------------------------------------------ 版式
-\usepackage{geometry}
-\geometry{left=2.6cm,right=2.6cm,top=2.7cm,bottom=2.7cm,headsep=0.6cm}
-\usepackage{amsmath,amssymb,bm}
-\usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{array}
-\usepackage{tabularx}
-\usepackage{multirow}
+\usepackage[margin=2.4cm,headheight=15pt]{geometry}
+\usepackage{amsmath,amssymb,bm,mathtools,newtxtext,newtxmath}
+\usepackage{graphicx,booktabs,tabularx,array,placeins,microtype,fancyhdr}
 \usepackage[font=small,labelfont=bf,labelsep=quad]{caption}
-\usepackage{subcaption}
-\usepackage{xcolor}
-\usepackage{enumitem}
-\usepackage{fancyhdr}
-\usepackage[colorlinks=true,linkcolor=black,citecolor=blue!55!black,
-            urlcolor=blue!55!black]{hyperref}
-
-
-
-\linespread{1.18}
-\setlength{\emergencystretch}{2.5em}
-\setlength{\parskip}{0.25em}
-\setlist{itemsep=2pt,topsep=3pt,parsep=0pt}
-\graphicspath{{figures/}}
-
-\pagestyle{fancy}
-\fancyhf{}
-\fancyhead[L]{\small MATLAB个人大作业}
-\fancyhead[R]{\small 变推力变质量火箭的入轨规划与预测控制}
-\fancyfoot[C]{\small\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
-
-\newcommand{\dd}{\mathrm{d}}
+\usepackage{xurl}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=black,urlcolor=black]{hyperref}
+\linespread{1.15}\setlength{\parskip}{.15em}\setlength{\emergencystretch}{2em}
+\graphicspath{{figures/}}\pagestyle{fancy}\fancyhf{}
+\fancyhead[L]{\small 变质量火箭的轨道规划与预测控制}
+\fancyhead[R]{\small 启发式优化对比研究}\fancyfoot[C]{\thepage}
+\newcommand{\dd}{\,\mathrm d}
 \newcommand{\bvec}[1]{\bm{#1}}
 \newcommand{\unit}[1]{\,\mathrm{#1}}
-
-% ------------------------------------------------------------------ 标题
-\title{\bfseries 变推力—变质量火箭的两段燃烧入轨规划\\[2pt]
-       与模型预测控制}
-\author{金承果}
-\date{2026 年 10 月}
-
-\begin{document}
-\maketitle
-\thispagestyle{empty}
-
+\input{comparison_values.tex}
+\title{\heiti 变质量火箭两段燃烧轨道规划的启发式优化比较\\与模型预测控制}
+\author{金承果}\date{}
+\begin{document}\maketitle
 \begin{abstract}
-\noindent
-本文以“把一枚教学用运载火箭送入 600\,km 近圆轨道”为统一目标，建立了从物理建模、
-数值求解、轨迹优化到闭环控制的完整链路。模型采用地心二维极坐标下的变质量质点动力学，
-推力由常有效排气速度与可控推进剂流率给出，并计入指数大气模型的二次阻力与按密度缩放的
-高斯加速度扰动。控制量被参数化为“亚轨道燃烧—无推力滑行—圆轨化燃烧”两段燃烧方案的
-10 个设计变量，先用粒子群优化（PSO）在归一化空间中全局搜索，再用序列二次规划（SQP）
-修正终端残差；规划阶段以 GPU 批量四阶 Runge--Kutta 积分筛选候选，以自适应
-Dormand--Prince 方法复核。对已有可行参考，进一步设计了时变线性化、约束二次规划（QP）
-的模型预测控制（MPC），并与相同扰动下的开环前馈作对照。
-
-所得方案在 577.305\,s 关机，高度误差 8.28\,m、径向速度误差 0.045\,m/s、切向速度误差
-0.020\,m/s，瞬时密切轨道偏心率 $8.69\times10^{-6}$；关机后仅受引力与阻力推进一个
-轨道周期（5792.33\,s），高度保持在 599.992--600.113\,km。与偏角限制 $\pm10^\circ$、
-滑行限制 250\,s 的紧约束解相比，放宽边界后推进剂少用 1.08\,t（$-2.0\%$）、峰值过载
-由 15.9\,g 降到 13.1\,g，代价是动压峰值由 47.8\,kPa 升到 68.6\,kPa、飞行时间增加
-112\,s；新解把圆轨化推迟到远地点，结构更接近霍曼转移。在另一独立扰动实现下，
-闭环位置跟踪均方根误差 4.21\,m、速度误差 0.089\,m/s，同一扰动下的开环对照分别为
-31.5\,km 与 108\,m/s；286 次 QP 全部收敛，单次平均 2.24\,ms。
-
-文中同时给出精度自评：终端残差 8.28\,m 与步长细化给出的 3.18\,m 数值不确定度同量级，
-故只宜声称“数米级”入轨精度；结论仅对应单次扰动试验与简化模型，不构成全局最优性、
-统计鲁棒性或严格闭环稳定性的证明。
-
-\vspace{0.6em}
-\noindent\textbf{关键词：}变质量动力学；齐奥尔科夫斯基方程；两段燃烧入轨；粒子群优化；
-序列二次规划；模型预测控制；二次规划；约束敏感性
+针对变推力、变质量火箭的近地圆轨道注入问题，建立含中心引力、二次空气阻力和密度相关高斯扰动的二维极坐标动力学模型，构建离线规划与在线轨迹跟踪的分层框架。以两段燃烧及中间滑行为控制结构，将偏角、流率和阶段时长参数化为十维变量。在相同初始候选、搜索边界、扰动实现及评价预算下，对纯粒子群优化（PSO）、实数编码遗传算法（GA）和多起点模拟退火（SA）开展五组配对种子实验，全部算法均不使用局部精修。搜索采用并行四阶龙格--库塔积分，最终控制由独立高精度自适应积分复核。
+在600\,km算例中，PSO、GA和SA的复核通过数分别为\PSOPass、\GAPass 和\SAPass（各五次），复核目标中位数分别为\PSOMedian、\GAMedian 和\SAMedian。以通过复核的纯PSO轨迹为参考，构造时变线性化MPC并求解凸二次规划。在独立于规划的同一实际扰动下，闭环与开环位置跟踪均方根误差分别为\ClosedPos\,m和\OpenPos\,m。
+结果支持在本模型、预算及配置下比较三种搜索策略，并表明滚动反馈能抑制参考执行中的误差积累。有限重复试验不构成算法一般优越性或严格闭环稳定性的证明。
+\vspace{.4em}\par\noindent\textbf{关键词：}变质量动力学；两段燃烧；粒子群优化；遗传算法；模拟退火；模型预测控制；二次规划
 \end{abstract}
-
-\vspace{-0.4em}
-\begin{center}\rule{0.86\linewidth}{0.4pt}\end{center}
-
 \input{sections/01_intro}
 \input{sections/02_model}
 \input{sections/03_numerics}
@@ -87,10 +31,7 @@ Dormand--Prince 方法复核。对已有可行参考，进一步设计了时变�
 \input{sections/06_results}
 \input{sections/07_discussion}
 \input{sections/08_conclusion}
-
-\appendix
-\input{sections/appendix}
-
-\input{sections/refs}
-
+\appendix\input{sections/appendix}
+\FloatBarrier
+{\small\raggedright\linespread{1.0}\selectfont\input{sections/refs}}
 \end{document}
