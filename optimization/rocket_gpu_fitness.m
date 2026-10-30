@@ -1,6 +1,6 @@
 function fitness=rocket_gpu_fitness(unit,p,opt)
 % Batched scalar CUDA kernels: one fixed-step RK4 rocket trajectory per particle.
-% GPU approximation is used only for PSO; final evaluation/SQP use ode45.
+% Shared GPU search evaluator; fixed returned controls are verified with ode45.
 z=opt.lb+unit.*(opt.ub-opt.lb);
 mu=p.mu;Re=p.Re;rho0=p.rho0;H=p.H;drag=.5*p.Cd*p.A;
 m0=p.m0;dry=p.mdry;c=p.c;holdTime=p.turnStart;r0=Re+p.h0;

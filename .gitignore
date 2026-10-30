@@ -33,6 +33,14 @@ slprj/
 # ---------------------------------------------------------------- Python
 __pycache__/
 *.py[cod]
+*.nbc
+*.nbi
+.venv/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
 
 # ---------------------------------------------------------------- 临时目录
 paper/_preview/
@@ -46,3 +54,8 @@ desktop.ini
 .DS_Store
 .vscode/
 .idea/
+
+# GPU/JIT caches and local MATLAB preferences are not experimental data.
+.cupy/
+.numba/
+matlab-prefs/

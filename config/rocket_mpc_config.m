@@ -24,5 +24,5 @@ cfg.saveResults=true;
 cfg.makeReport=true;
 cfg.showProgress=true;
 cfg.endTime=Inf;                  % Inf = reference cutoff; finite for short checks
-cfg.referenceFile='rocket_two_burn_result.mat';
+cfg.referenceFile='rocket_pure_pso_reference.mat'; % Pure, independently verified PSO
 end

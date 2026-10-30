@@ -6,6 +6,12 @@ switch lower(char(action))
     case 'optimize'
         result=rocket_two_burn_pso();
         if result.success,verify_orbit();end
+    case 'optimize-ga'
+        rocket_two_burn_ga();
+    case 'optimize-sa'
+        rocket_two_burn_sa();
+    case 'compare-planners'
+        compare_planners();
     case 'animate'
         rocket_mpc_comet();
     case 'animate-reference'
@@ -22,7 +28,9 @@ switch lower(char(action))
     case 'demo'
         demo_rocket;
     otherwise
-        fprintf('run_rocket(''optimize'') : PSO + optional SQP\n');
+        fprintf('run_rocket(''optimize'') : pure PSO (no local refinement)\n');
+        fprintf('run_rocket(''optimize-ga'') / (''optimize-sa'') : pure GA / multi-start SA\n');
+        fprintf('run_rocket(''compare-planners'') : equal-budget MATLAB comparison\n');
         fprintf('run_rocket(''animate'')  : simultaneous MPC/open-loop comet animation\n');
         fprintf('run_rocket(''animate-reference'') : original single-reference animation\n');
         fprintf('run_rocket(''mpc'')      : MPC tracking of saved PSO trajectory\n');
