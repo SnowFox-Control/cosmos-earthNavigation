@@ -138,11 +138,14 @@ data=[('位置跟踪RMS / m',metrics['openPositionRMS'],metrics['closedPositionR
 for label,a,b in data:lines.append(f'{label} & {a:.4f} & {b:.4f}'+r'\\')
 lines.append(r'\bottomrule\end{tabular}\end{table}')
 (PAPER/'mpc_table.tex').write_text('\n'.join(lines),encoding='utf8')
-hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in [
+hashes={str(p.relative_to(ROOT)):hashlib.sha256(
+    p.read_bytes().replace(b'\r\n',b'\n') if p.suffix in ['.m','.py'] else p.read_bytes()
+    ).hexdigest() for p in [
     DATA/'inputs.mat',ROOT/'experiments'/'compare_planners.py',ROOT/'experiments'/'planner_cpu.py',
     ROOT/'model'/'rocket_dynamics.m',ROOT/'experiments'/'verify_comparison.m']}
 metadata=dict(algorithms=summary,referenceSeed=control['referenceSeed'],metrics=metrics,
     trials=15,localRefinement=False,python=platform.python_version(),numpy=np.__version__,
+    hashConvention='Raw bytes for binary inputs; LF-normalized bytes for .m/.py sources',
     integrator='double RK4, max step .05 s; MATLAB ode45 independent verification',
     hashes=hashes)
 (DATA/'summary.json').write_text(json.dumps(metadata,indent=2),encoding='utf8')

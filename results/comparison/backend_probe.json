@@ -1,0 +1,10 @@
+{
+  "batch": 96,
+  "step_s": 0.05,
+  "sample_count": 1,
+  "cuda_cached_seconds": 31.578980199999933,
+  "numba_cached_seconds": 0.016444000000774395,
+  "max_score_difference": 8.412825991399586e-12,
+  "max_terminal_component_difference": 1.862645149230957e-09,
+  "note": "Pilot timings from the same initial batch; not a hardware-wide performance claim."
+}
